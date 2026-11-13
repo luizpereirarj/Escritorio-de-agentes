@@ -428,3 +428,107 @@ button{font-family:inherit;color:inherit}
 .rn-fora{color:var(--tx3,#646d84);font-size:11.5px;line-height:1.6;margin-top:14px;
   border-top:1px solid var(--line,#262b3d);padding-top:12px}
 .rn-custo{color:var(--tx3,#646d84);font-size:11px}
+
+/* ===========================================================
+   TEMA SQUAD PAGAR & RECEBER — banco, minimalista, azul e laranja
+   (sobrepõe o tema escuro acima; para voltar, apague este bloco)
+   =========================================================== */
+:root{
+  --bg:        #f4f6f9;
+  --bg-2:      #eef1f5;
+  --panel:     #ffffff;
+  --panel-2:   #f7f9fb;
+  --line:      #e1e6ed;
+  --txt:       #0B2A55;
+  --txt-dim:   #66748a;
+
+  --acc-1:    #0A4DA2;
+  --acc-2:    #3E8EDE;
+  --acc-3:    #0A4DA2;
+  --alt-1:    #FF7A1A;
+  --alt-2:    #0B2A55;
+
+  --ok:        #12a36b;
+  --warn:      #FF7A1A;
+  --off:       #9aa6b6;
+
+  --shadow:    0 12px 32px rgba(11,42,85,.12);
+}
+body{background:var(--bg);color:var(--txt)}
+
+#topbar{background:#ffffff;box-shadow:0 1px 0 var(--line),0 6px 18px rgba(11,42,85,.05)}
+#topbar::after{background:linear-gradient(90deg,#0A4DA2 0 72%,#FF7A1A 72% 100%);animation:none;height:3px;opacity:1}
+.brand .logo{width:34px;height:34px;flex:0 0 34px}
+.brand-txt strong{background:none;color:var(--txt);-webkit-background-clip:initial;background-clip:initial;letter-spacing:1px}
+#clock{color:var(--txt);text-shadow:none}
+.stat{background:var(--panel-2)}
+.stat.working{border-color:rgba(18,163,107,.35)}
+.stat.idle{border-color:rgba(255,122,26,.4)}
+
+.btn{background:#ffffff;color:var(--txt)}
+.btn:hover{background:var(--bg-2);border-color:#c9d2de}
+.btn.primary{background:var(--acc-1);color:#fff;box-shadow:0 4px 14px rgba(10,77,162,.25)}
+.btn.primary:hover{background:#0B2A55;filter:none}
+.btn.danger{color:#c2410c;border-color:rgba(194,65,12,.3)}
+.btn.rec{background:var(--alt-1)}
+
+#stage{background:radial-gradient(1100px 620px at 50% 40%,#f7f9fb 0%,#e8edf3 62%,#dde3eb 100%)}
+.roomlegend .rl{background:rgba(255,255,255,.88);color:var(--txt);border-color:var(--line);box-shadow:0 2px 8px rgba(11,42,85,.06)}
+.roomlegend .dot{box-shadow:none}
+#fps{background:rgba(255,255,255,.85);color:var(--txt-dim)}
+.zbtn{background:rgba(255,255,255,.95);color:var(--txt);box-shadow:0 2px 8px rgba(11,42,85,.08)}
+.zbtn:hover{background:var(--bg-2);border-color:#c9d2de}
+
+.tooltip{background:#ffffff;border-color:var(--line);color:var(--txt)}
+.tooltip b{color:var(--acc-1)}
+.tooltip .tt-act{color:var(--alt-1)}
+.toast{background:#0B2A55;border-color:#0B2A55;color:#fff}
+
+#panel{background:var(--panel)}
+.tab.active{color:var(--acc-1);border-bottom-color:var(--alt-1)}
+.tabpane::-webkit-scrollbar-thumb{background:#d3dae4}
+.filterbar input:focus,.frow input:focus,.frow select:focus,.frow textarea:focus,
+.inline input:focus,.cv-envio textarea:focus{border-color:var(--acc-2)}
+.mini:hover{background:var(--bg-2)}
+.chip.active{background:rgba(10,77,162,.08);border-color:var(--acc-1);color:var(--acc-1)}
+
+.card{background:#ffffff}
+.card:hover,.hcard:hover,.roomcard:hover{border-color:#c9d2de}
+.card.s-trabalhando::before,.card.s-descanso::before,.card.s-reuniao::before{box-shadow:none}
+.card .av,.mhead canvas,.mon-av{background:var(--bg-2)}
+.pill.trabalhando{background:rgba(18,163,107,.1)}
+.pill.descanso{background:rgba(255,122,26,.12)}
+.pill.reuniao{background:rgba(10,77,162,.1);color:var(--acc-1)}
+.hcard{background:#ffffff}
+.hcard .why{color:var(--txt-dim);border-left-color:var(--alt-1)}
+.tag.detectado{background:rgba(255,122,26,.12);color:#c2560f}
+.tag.sugerido{background:rgba(10,77,162,.08);color:var(--acc-1)}
+.opt{color:var(--txt)}
+.roomcard{background:#ffffff}
+.roomcard .rname{color:var(--txt)}
+
+.monitor{background:var(--bg)}
+.mon-top{background:#ffffff}
+.mon-corpo{background:var(--bg-2)}
+.conversa{background:var(--bg)}
+.cv-baixo{background:#ffffff}
+.cv-msg.voce{background:rgba(10,77,162,.08);border-color:rgba(10,77,162,.25)}
+.cv-msg.sistema{color:#9a4a0c;background:rgba(255,122,26,.08);border-color:rgba(255,122,26,.35)}
+.cv-msg code{background:rgba(11,42,85,.06)}
+.cv-op.on{background:rgba(10,77,162,.08);border-color:var(--acc-1);color:var(--acc-1)}
+
+.modal{background:rgba(11,42,85,.35)}
+.modal-card{background:#ffffff;border-color:var(--line)}
+.seg button{color:var(--txt)}
+.seg button.on{background:rgba(10,77,162,.08);border-color:var(--acc-1);color:var(--acc-1)}
+.tagline b,.report h4{color:var(--acc-1)}
+.tagline em{color:var(--alt-1)}
+
+#reuniao{background:rgba(11,42,85,.45)}
+.rn-card{background:#ffffff;border-color:var(--line)}
+.rn-top{border-color:var(--line);background:linear-gradient(90deg,rgba(255,122,26,.10),transparent)}
+.rn-meta div,.rn-fala{background:var(--panel-2);border-color:var(--line)}
+.rn-fala{border-left-color:var(--acc-1)}
+.rn-fala.r2{border-left-color:var(--alt-1)}
+.rn-brief{background:rgba(10,77,162,.05);border-color:rgba(10,77,162,.25)}
+.rn-brief h3,.rn-fase{color:var(--acc-1)}

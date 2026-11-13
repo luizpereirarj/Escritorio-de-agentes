@@ -1,13 +1,35 @@
-# Escritório de Agentes
+# Squad Pagar & Receber — Escritório de Agentes
 
-Um escritório isométrico no navegador, estilo Habbo, para acompanhar e operar
-os seus agentes de IA. Cada agente é um boneco com mesa e computador próprios;
-clicar no computador dele abre o **sistema daquele agente** ali dentro, com
-botões para ligar, desligar, ver o log e conversar com ele pelo Claude Code.
+Um andar de prédio corporativo, isométrico e no estilo Habbo, para a squad de
+TI bancária que cuida dos fluxos de **pagamentos** (Pix, TED, agendamentos) e
+**recebimentos** (boleto, QR Code, conciliação). Estética minimalista, marca em
+azul e laranja. Cada pessoa da squad é um boneco com mesa e computador
+próprios; clicar no computador abre o **sistema daquele agente** ali dentro,
+com botões para ligar, desligar, ver o log e conversar com ele pelo Claude Code.
 
-- Diretoria, sala de serviço com 18 estações, lounge, sala de reunião e recepção.
-- Os bonecos trabalham na própria mesa, descansam no lounge no horário que você
-  definir e se juntam na sala de reunião quando há reunião.
+O andar:
+
+| Sala | O que tem |
+| --- | --- |
+| **Gerentes de Projeto** | 4 mesas (uma é a sua), roadmap do trimestre, quadro de ideias e próximas entregas |
+| **Tech Leaders** | 4 mesas com dois monitores, a arquitetura de pagar & receber desenhada no quadro |
+| **UX Design** | 4 mesas com mesa digitalizadora, moodboard com paleta, wireframe e post-its da jornada |
+| **Qualidade (QA)** | 6 mesas com celulares de teste, painel do pipeline de release |
+| **Desenvolvimento** | open space com 12 estações e o painel "Squad agora" |
+| **Sala de Reunião** | mesa para oito e tela de apresentação |
+| **Jogos** | fliperama, sinuca, pebolim, puffs e café |
+| **Recepção & circulação** | elevadores, balcão com o logo, pilares, sinalização de saída |
+
+As paredes da fachada têm janelas com vista da cidade que mudam com a hora do
+dia (dia, fim de tarde e noite). As salas são separadas por divisórias de vidro
+com faixa jateada, como num prédio de escritórios de verdade.
+
+- Cada agente tem uma sala (escolhida no cadastro ou na ficha dele) e senta
+  numa mesa livre dessa sala.
+- Os bonecos trabalham na própria mesa, vão para a sala de jogos no horário que
+  você definir e se juntam na sala de reunião quando há reunião.
+- O logo (setas de pagar e receber) é original da squad: troque em
+  `favicon.svg`, no topo do `index.html` e na função `logo` de `js/world.js`.
 - O escritório sobe os sistemas locais, vigia quem caiu e religa sozinho.
 - Nenhuma dependência: só Node.js.
 

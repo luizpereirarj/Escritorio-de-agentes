@@ -8,7 +8,7 @@ const ctx = cv.getContext('2d');
 const $   = s => document.querySelector(s);
 const $$  = s => Array.from(document.querySelectorAll(s));
 
-const opts = { rgb: true, names: true, status: true, paths: false };
+const opts = { rgb: false, names: true, status: true, paths: false };
 
 /* ===========================================================
    CÂMERA
@@ -197,7 +197,7 @@ class Actor {
   wander() {
     const room = this.a.status === 'descanso' ? WORLD.ROOMS.lounge
                : this.a.status === 'reuniao'  ? WORLD.ROOMS.reuniao
-               : WORLD.ROOMS.servico;
+               : (WORLD.ROOMS[this.a.dept] || WORLD.ROOMS.dev);
     for (let i = 0; i < 14; i++) {
       const x = room.x1 + Math.floor(Math.random() * (room.x2 - room.x1));
       const y = room.y1 + Math.floor(Math.random() * (room.y2 - room.y1));
@@ -259,7 +259,7 @@ class Actor {
     if (this.moving)           { this.act = 'indo para ' + (this.slot ? (this.slot.label || 'a estação') : 'algum lugar'); return; }
     if (st === 'trabalhando')  { this.act = this.slot ? ('produzindo na ' + this.slot.label) : 'procurando mesa livre'; return; }
     if (st === 'reuniao')      { this.act = 'em reunião'; return; }
-    if (st === 'descanso')     { this.act = this.slot ? this.slot.act : 'circulando no lounge'; return; }
+    if (st === 'descanso')     { this.act = this.slot ? this.slot.act : 'circulando na sala de jogos'; return; }
     this.act = '';
   }
 
@@ -347,11 +347,19 @@ function garanteEstacao() {
   const mesas = FURN.workSlots.filter(s => !s.vip).sort((a, b) => a.id < b.id ? -1 : 1);
   const tomadas = new Set();
   let mudou = false;
+  // primeiro reserva quem já está numa mesa da própria sala
   for (const ag of ROSTER.all()) {
     if (ag.boss) { if (ag.slotId) tomadas.add(ag.slotId); continue; }
-    const valida = ag.slotId && mesas.some(m => m.id === ag.slotId) && !tomadas.has(ag.slotId);
-    if (valida) { tomadas.add(ag.slotId); continue; }
-    const livre = mesas.find(m => !tomadas.has(m.id));
+    const m = mesas.find(m => m.id === ag.slotId);
+    if (m && m.room === ag.dept && !tomadas.has(m.id)) tomadas.add(m.id);
+  }
+  for (const ag of ROSTER.all()) {
+    if (ag.boss) continue;
+    const m = mesas.find(m => m.id === ag.slotId);
+    if (m && m.room === ag.dept && tomadas.has(m.id)) continue;
+    // mesa livre na sala dele; se a sala lotou, qualquer mesa livre
+    const livre = mesas.find(m => m.room === ag.dept && !tomadas.has(m.id)) ||
+                  mesas.find(m => !tomadas.has(m.id));
     ag.slotId = livre ? livre.id : null;
     if (livre) tomadas.add(livre.id);
     mudou = true;
@@ -436,7 +444,7 @@ function frame(now) {
   // fundo
   if (!bgCache || bgCache.w !== cw || bgCache.h !== ch) {
     const g = ctx.createRadialGradient(cw / 2, ch * .42, 40, cw / 2, ch * .42, Math.max(cw, ch) * .8);
-    g.addColorStop(0, '#141a2e'); g.addColorStop(.6, '#090b13'); g.addColorStop(1, '#05060a');
+    g.addColorStop(0, '#f4f6f9'); g.addColorStop(.6, '#e6ebf1'); g.addColorStop(1, '#d9e0e9');
     bgCache = { g, w: cw, h: ch };
   }
   ctx.fillStyle = bgCache.g; ctx.fillRect(0, 0, cw, ch);
@@ -643,7 +651,7 @@ function renderHire() {
       const a = ROSTER.hire(c.key);
       if (!a) return;
       syncActors(); renderAll();
-      toast(`${a.name} foi contratado(a) — entrando pela recepção.`);
+      toast(`${a.name} foi contratado(a) — saindo do elevador.`);
       const ac = actors.get(a.id);
       if (ac) focusTile(ac.x, ac.y, 0.6);
     });
@@ -667,12 +675,14 @@ function renderHire() {
 function renderRooms() {
   const box = $('#rooms-list');
   box.innerHTML = '';
-  const order = ['diretoria', 'servico', 'lounge', 'reuniao', 'corredor'];
+  const order = [...WORLD.WORK_ROOMS, 'reuniao', 'lounge', 'corredor'];
   for (const id of order) {
     const r = WORLD.ROOMS[id];
     const inside = Array.from(actors.values()).filter(ac =>
       !ac.hidden && WORLD.roomAt(Math.round(ac.x), Math.round(ac.y)) === id);
-    const cap = id === 'servico' ? 18 : id === 'diretoria' ? 2 : id === 'reuniao' ? 8 : id === 'lounge' ? FURN.restSlots.length : 0;
+    const cap = id === 'reuniao' ? FURN.meetSlots.length
+              : id === 'lounge'  ? FURN.restSlots.length
+              : FURN.workSlots.filter(s => s.room === id).length;
     const pct = cap ? Math.min(100, inside.length / cap * 100) : 0;
     const el = document.createElement('div');
     el.className = 'roomcard';
@@ -682,7 +692,7 @@ function renderRooms() {
       <div class="rmeta" style="color:${r.accent}">${inside.length} pessoa(s) agora${cap ? ` · ${cap} lugares` : ''}</div>
       ${cap ? `<div class="bar"><i style="width:${pct}%;background:${r.accent}"></i></div>` : ''}`;
     el.addEventListener('click', () => {
-      if (id === 'corredor') focusTile(24, 20, 0.7);
+      if (id === 'corredor') focusTile(40, 15.5, 0.8);
       else focusTile((r.x1 + r.x2) / 2, (r.y1 + r.y2) / 2, 0.7);
     });
     box.appendChild(el);
@@ -694,7 +704,7 @@ function renderStats() {
   $('#st-idle').textContent = ROSTER.count('descanso');
   $('#st-off').textContent  = ROSTER.count('offline');
   const leg = $('#roomlegend');
-  leg.innerHTML = ['diretoria', 'servico', 'lounge', 'reuniao'].map(id => {
+  leg.innerHTML = [...WORLD.WORK_ROOMS, 'reuniao', 'lounge'].map(id => {
     const r = WORLD.ROOMS[id];
     const n = Array.from(actors.values()).filter(ac =>
       !ac.hidden && WORLD.roomAt(Math.round(ac.x), Math.round(ac.y)) === id).length;
@@ -762,6 +772,9 @@ function openAgent(id) {
     </div>
 
     ${a.boss ? '' : `
+    <div class="frow"><label>Sala</label>
+      <select id="f-sala">${opcoesSala(a.dept)}</select>
+    </div>
     <div class="frow"><label>Estação</label>
       <div class="hint" style="padding:6px 0">${a.slotId ? 'Estação ' + esc(a.slotId) + ' — é dela e de mais ninguém' : 'sem estação livre no momento'}</div>
     </div>
@@ -781,7 +794,7 @@ function openAgent(id) {
         }).join('')}
       </div>
     </div>
-    <p class="hint" style="margin:-6px 0 14px">${esc(textoHorario(a))}. Fora do horário ele vai para o lounge sozinho; dentro, volta para a estação.</p>
+    <p class="hint" style="margin:-6px 0 14px">${esc(textoHorario(a))}. Fora do horário ele vai para a sala de jogos sozinho; dentro, volta para a estação.</p>
     `}
 
     <div class="frow"><label>Visual</label>
@@ -828,6 +841,13 @@ function openAgent(id) {
     const trocouStatus = ns !== a.status;
     if (trocouStatus) setStatus(a, ns);
     if (!a.boss) {
+      const sala = $('#f-sala').value;
+      if (sala && sala !== a.dept) {
+        a.dept = sala; a.slotId = null;
+        syncActors();
+        const ac = actors.get(a.id);
+        if (ac) { ac.releaseSlot(); ac.path = []; ac.fine = null; ac.seated = false; }
+      }
       const i = $('#f-h1').value, f = $('#f-h2').value;
       const dias = $$('#f-dias button.on').map(b => +b.dataset.d);
       // horário só vale com as duas pontas e pelo menos um dia
@@ -852,13 +872,20 @@ function openAgent(id) {
   modal.classList.remove('hidden');
 }
 
+/** opções do seletor de sala de trabalho */
+function opcoesSala(atual) {
+  return WORLD.WORK_ROOMS.map(id =>
+    `<option value="${id}" ${id === atual ? 'selected' : ''}>${esc(WORLD.ROOMS[id].short)}</option>`).join('');
+}
+
 function openNew() {
   mbody.innerHTML = `
     <h3 style="font-family:var(--f-display);margin:0 0 4px">Cadastrar agente</h3>
-    <p class="hint" style="margin-bottom:16px">Ele entra pela recepção e vai até uma estação livre. Se ele tem um sistema,
+    <p class="hint" style="margin-bottom:16px">Ele entra pelos elevadores e vai até uma estação livre da sala escolhida. Se ele tem um sistema,
       cadastre junto: o computador dele passa a abrir esse sistema aqui dentro.</p>
     <div class="frow"><label>Nome</label><input id="n-name" placeholder="ex.: Tati" maxlength="22"></div>
-    <div class="frow"><label>Função</label><input id="n-role" placeholder="ex.: Analista de Conteúdo" maxlength="48"></div>
+    <div class="frow"><label>Função</label><input id="n-role" placeholder="ex.: Dev Back-end · Cartões" maxlength="48"></div>
+    <div class="frow"><label>Sala</label><select id="n-sala">${opcoesSala('dev')}</select></div>
     <div class="frow"><label>Emoji</label><input id="n-emo" placeholder="🤖" maxlength="4" value="🤖"></div>
     <div class="frow"><label>O que ele faz</label><textarea id="n-brief" rows="2" placeholder="Uma frase sobre a função dele."></textarea></div>
     <div class="frow"><label>Sistema do agente</label>
@@ -927,7 +954,8 @@ function openNew() {
       name, role: $('#n-role').value.trim() || 'Função a definir',
       emoji: $('#n-emo').value.trim() || '🤖',
       path: tipo === 'local' ? $('#n-pasta').value.trim() : null,
-      sistema, reuniao: $('#n-reun').checked, brief
+      sistema, reuniao: $('#n-reun').checked, brief,
+      sala: $('#n-sala').value
     });
     syncActors(); renderAll(); closeModal();
     toast(`${a.name} entrou no quadro.` + (sistema ? ' Clique no computador dele para abrir o sistema.' : ''));
@@ -1028,7 +1056,7 @@ function buildReport() {
   const naoContratados = ROSTER.CATALOG.filter(c => c.cat === 'sugerido' && !ROSTER.isHired(c.key)).slice(0, 3);
 
   const fala = `Relatório das ${hora}. Temos ${work.length + meet.length} em serviço, ` +
-    `${rest.length} no lounge e ${off.length} fora do expediente. ` +
+    `${rest.length} na sala de jogos e ${off.length} fora do expediente. ` +
     (work.length ? `Trabalhando agora: ${work.map(a => a.name).join(', ')}. ` : 'Ninguém produzindo no momento. ') +
     (rest.length ? `No descanso: ${rest.map(a => a.name).join(', ')}. ` : '') +
     (naoContratados.length ? `Sugiro contratar ${naoContratados.map(c => c.name + ', ' + c.role).join('; ')}.` : '');
@@ -1039,7 +1067,7 @@ function buildReport() {
     <div class="report">
       <div class="big">
         <span style="color:var(--ok)">${work.length + meet.length} em serviço</span> ·
-        <span style="color:var(--warn)">${rest.length} no lounge</span> ·
+        <span style="color:var(--warn)">${rest.length} na sala de jogos</span> ·
         <span style="color:var(--off)">${off.length} offline</span>
       </div>
 
@@ -1384,7 +1412,7 @@ function command(txt) {
     setAll('trabalhando'); speak('Todo mundo de volta às estações.'); return;
   }
   if (/(pausa|descanso|lounge|intervalo)/.test(txt) && /(todos|geral)/.test(txt)) {
-    setAll('descanso'); speak('Liberei a equipe para o lounge.'); return;
+    setAll('descanso'); speak('Liberei a equipe para a sala de jogos.'); return;
   }
   if (/reuni[ãa]o/.test(txt) && /(todos|chama|convoca)/.test(txt)) {
     setAll('reuniao'); speak('Convocando todo mundo para a sala de reunião.'); return;
@@ -1396,7 +1424,7 @@ function command(txt) {
   }
   if (/quem.*(descans|lounge|parad)/.test(txt)) {
     const w = ROSTER.all().filter(a => a.status === 'descanso');
-    speak(w.length ? `No lounge: ${w.map(a => a.name).join(', ')}.` : 'Lounge vazio.');
+    speak(w.length ? `Na sala de jogos: ${w.map(a => a.name).join(', ')}.` : 'Sala de jogos vazia.');
     return;
   }
   if (/contrat/.test(txt)) {
@@ -1410,7 +1438,7 @@ function command(txt) {
   const alvo = ROSTER.all().find(a => txt.includes(a.name.toLowerCase()));
   if (alvo) {
     const ac = actors.get(alvo.id);
-    if (/descans|pausa|lounge/.test(txt))      { setStatus(alvo, 'descanso');    speak(`${alvo.name} liberado para o lounge.`); }
+    if (/descans|pausa|lounge/.test(txt))      { setStatus(alvo, 'descanso');    speak(`${alvo.name} liberado para a sala de jogos.`); }
     else if (/reuni[ãa]o/.test(txt))           { setStatus(alvo, 'reuniao');     speak(`${alvo.name} indo para a reunião.`); }
     else if (/offline|desliga|encerra/.test(txt)) { setStatus(alvo, 'offline');  speak(`${alvo.name} encerrou o expediente.`); }
     else if (/trabalh|servi[çc]o|volta/.test(txt)) { setStatus(alvo, 'trabalhando'); speak(`${alvo.name} voltou para a estação.`); }
@@ -1451,7 +1479,7 @@ $$('.chip').forEach(b => b.addEventListener('click', () => {
 
 $('#team-search').addEventListener('input', renderTeam);
 $('#btn-allwork').addEventListener('click', () => { setAll('trabalhando'); toast('Equipe convocada para as estações.'); });
-$('#btn-allrest').addEventListener('click', () => { setAll('descanso'); toast('Equipe liberada para o lounge.'); });
+$('#btn-allrest').addEventListener('click', () => { setAll('descanso'); toast('Equipe liberada para a sala de jogos.'); });
 $('#btn-report').addEventListener('click', openReport);
 $('#btn-avisos').addEventListener('click', () => AVISOS_UI.abrir());
 $('#btn-quadro').addEventListener('click', openQuadro);

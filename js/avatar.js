@@ -11,8 +11,9 @@ const AVATAR = (() => {
                   '#8e8e93', '#e63946', '#8b5cf6', '#38bdf8', '#f472b6', '#22c55e'];
   const HAIR_S = ['curto', 'fade', 'ondulado', 'cacheado', 'longo', 'rabo',
                   'coque', 'raspado', 'moicano', 'chanel', 'afro', 'franja'];
-  const SHIRT = ['#7c6cff', '#18bfff', '#c4b8ff', '#23e08a', '#a855f7', '#f472b6',
-                 '#9d8cff', '#2563eb', '#e9edf8', '#1f2937', '#14b8a6', '#fb7185'];
+  // guarda-roupa de escritório de banco: azuis, branco, cinza e um toque de laranja
+  const SHIRT = ['#0A4DA2', '#0B2A55', '#3E8EDE', '#e9edf2', '#ffffff', '#64748b',
+                 '#FF7A1A', '#9cc3ee', '#1f2937', '#cbd5e1', '#2563eb', '#f4a261'];
   const PANTS = ['#26304a', '#1b2030', '#3b3f52', '#4b5563', '#2f3e2f', '#312244',
                  '#8b94a6', '#1e293b'];
 
@@ -405,7 +406,7 @@ const AVATAR = (() => {
     const h   = nameH + subH;
     const top = bottomY - h;
 
-    ctx.fillStyle = 'rgba(6,8,15,.88)';
+    ctx.fillStyle = 'rgba(11,42,85,.92)';
     ISO.rrect(ctx, sx - w / 2, top, w, h, 7); ctx.fill();
     ctx.strokeStyle = ISO.rgba(color, .6); ctx.lineWidth = 1.2; ctx.stroke();
 
@@ -430,17 +431,17 @@ const AVATAR = (() => {
     const tw = ctx.measureText(txt).width;
     const w = tw + 32, h = 19, x = sx - w / 2, y = bottomY - h;
 
-    ctx.fillStyle = 'rgba(8,10,18,.92)';
+    ctx.fillStyle = 'rgba(255,255,255,.96)';
     ISO.rrect(ctx, x, y, w, h, 9); ctx.fill();
-    ctx.strokeStyle = ISO.rgba(color, .55); ctx.lineWidth = 1.1; ctx.stroke();
+    ctx.strokeStyle = ISO.rgba(color, .7); ctx.lineWidth = 1.1; ctx.stroke();
     ctx.beginPath();
     ctx.moveTo(sx - 3.4, y + h - 1); ctx.lineTo(sx, y + h + 4); ctx.lineTo(sx + 3.4, y + h - 1);
-    ctx.fillStyle = 'rgba(8,10,18,.92)'; ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,.96)'; ctx.fill();
 
     ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
     ctx.font = "11px sans-serif"; ctx.fillText(emoji, x + 8, y + h / 2);
     ctx.font = "600 10px Barlow Semi Condensed, sans-serif";
-    ctx.fillStyle = ISO.rgba(color, .95);
+    ctx.fillStyle = ISO.shade(color, -.3);
     ctx.fillText(txt, x + 23, y + h / 2 + .5);
     ctx.restore();
     return h + 4;

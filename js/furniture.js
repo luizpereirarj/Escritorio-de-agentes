@@ -27,10 +27,10 @@ const FURN = (() => {
   /** cadeira no lugar do boneco, em duas camadas para ele sentar DENTRO dela.
       A pegada acompanha a escala do boneco: se a cadeira ficasse menor que
       ele, o corpo sobraria para fora do encosto.                          */
-  function cadeira(seat, tipo, hue) {
+  function cadeira(seat, tipo, hue, cor) {
     const L = 1.05 * AVATAR.SCALE;                   // lado da pegada, em tiles
     const comum = { x: seat.x - L / 2, y: seat.y - L / 2, w: L, d: L,
-                    face: seat.facing, hue: hue || 200 };
+                    face: seat.facing, hue: hue || 200, cor };
     // o boneco é desenhado em (seat.x + seat.y + 0.5)
     add(Object.assign({ t: tipo, camada: 'tras',   dk: seat.x + seat.y - 0.25 }, comum));
     return add(Object.assign({ t: tipo, camada: 'frente', dk: seat.x + seat.y + 0.75 }, comum));
@@ -40,135 +40,131 @@ const FURN = (() => {
      LAYOUT
      =========================================================== */
 
-  /* ---------- SALA DE SERVIÇO: 12 estações ----------
-     Duas fileiras. A que ficava colada na parede do fundo saiu: tapava o
-     painel de números e deixava a sala apertada.                        */
-  const COLS = [21, 25, 29, 33, 37, 41];
-  const ROWS = [
-    { y: 7,  face: 's' },      // de frente: vemos o rosto, monitor de costas
-    { y: 12, face: 'n' }       // de costas: a tela aparece para nós
-  ];
-  let n = 0;
-  for (const r of ROWS) {
-    for (const x of COLS) {
-      n++;
-      const id = 'D' + String(n).padStart(2, '0');
-      const hue = (n * 41) % 360;
-      let deskY, seat;
-      if (r.face === 'n') { deskY = r.y;       seat = { x: x + 1.5, y: r.y + 2.0,  facing: 'n' }; }
-      else                { deskY = r.y + 1.9; seat = { x: x + 1.5, y: r.y + 1.20, facing: 's' }; }
+  const BR = WORLD.BRAND;
+  const R  = WORLD.ROOMS;
 
-      const mesa = add({ t: 'deskGamer', id, x, y: deskY, w: 3, d: 1.3,
-                         face: r.face, busy: false, hue, sabor: n % 3 });
-      block(x, deskY, 3, 1.3);
-      cadeira(seat, 'chairGamer', hue);
-      workSlots.push({ id, room: 'servico', label: 'Estação ' + id,
-                       x: seat.x, y: seat.y, facing: seat.facing, obj: mesa });
-    }
+  /**
+   * Uma estação de trabalho: mesa, cadeira e o lugar do boneco.
+   * face 'n' = de costas para nós (a tela aparece);
+   * face 's' = de frente para nós (vemos o rosto).
+   */
+  let nMesa = 0;
+  function estacao(id, room, x, rowY, face, extra, vip) {
+    nMesa++;
+    let deskY, seat;
+    if (face === 'n') { deskY = rowY;       seat = { x: x + 1.5, y: rowY + 2.0, facing: 'n' }; }
+    else              { deskY = rowY + 1.9; seat = { x: x + 1.5, y: rowY + 1.2, facing: 's' }; }
+    const accent = R[room].accent;
+    const mesa = add({ t: 'deskWork', id, x, y: deskY, w: 3, d: 1.3, face, busy: false,
+                       room, extra, accent, sabor: nMesa % 5, vip: !!vip });
+    block(x, deskY, 3, 1.3);
+    cadeira(seat, vip ? 'chairBoss' : 'chairOffice', 0, accent);
+    workSlots.push({ id, room, label: (vip ? 'Mesa da liderança' : 'Mesa ' + id),
+                     x: seat.x, y: seat.y, facing: seat.facing, obj: mesa, vip: !!vip });
   }
 
+  /* ---------- GERENTES DE PROJETO ---------- */
+  estacao('GP-1', 'gp', 1.5, 1.6, 's', 'notebook', true);   // sua mesa
+  estacao('GP-2', 'gp', 6.2, 1.6, 's', 'notebook');
+  estacao('GP-3', 'gp', 1.5, 8,   'n', 'notebook');
+  estacao('GP-4', 'gp', 6.2, 8,   'n', 'notebook');
+  add({ t: 'plant', x: 9.6, y: 11.3, k: 1 }); block(9.6, 11.3, 1, 1);
 
-  /* ---------- DIRETORIA ---------- */
-  const seatA = { x: 4.5, y: 4.0,  facing: 's' };
-  const mesaA = add({ t: 'deskBoss', id: 'DIR-1', x: 2.4, y: 4.7, w: 4.2, d: 1.6,
-                      face: 's', busy: false, hue: 8, controle: true });
-  block(2.4, 4.7, 4.2, 1.6);
-  cadeira(seatA, 'chairBoss');
-  workSlots.push({ id: 'DIR-1', room: 'diretoria', label: 'Mesa da diretoria 1',
-                   x: seatA.x, y: seatA.y, facing: 's', obj: mesaA, vip: true });
+  /* ---------- TECH LEADERS ---------- */
+  estacao('TL-1', 'tech', 12.5, 1.6, 's', 'dual');
+  estacao('TL-2', 'tech', 17.2, 1.6, 's', 'dual');
+  estacao('TL-3', 'tech', 12.5, 8,   'n', 'dual');
+  estacao('TL-4', 'tech', 17.2, 8,   'n', 'dual');
+  add({ t: 'plant', x: 20.5, y: 11.3, k: 0 }); block(20.5, 11.3, 1, 1);
 
-  const seatB = { x: 4.5, y: 11.0, facing: 's' };
-  const mesaB = add({ t: 'deskBoss', id: 'DIR-2', x: 2.4, y: 11.7, w: 4.2, d: 1.6,
-                      face: 's', busy: false, hue: 196, controle: true });
-  block(2.4, 11.7, 4.2, 1.6);
-  cadeira(seatB, 'chairBoss');
-  workSlots.push({ id: 'DIR-2', room: 'diretoria', label: 'Mesa da diretoria 2',
-                   x: seatB.x, y: seatB.y, facing: 's', obj: mesaB, vip: true });
+  /* ---------- UX DESIGN ---------- */
+  estacao('UX-1', 'ux', 23.5, 1.6, 's', 'tablet');
+  estacao('UX-2', 'ux', 28.2, 1.6, 's', 'tablet');
+  estacao('UX-3', 'ux', 23.5, 8,   'n', 'tablet');
+  estacao('UX-4', 'ux', 28.2, 8,   'n', 'tablet');
+  add({ t: 'plant', x: 31.5, y: 11.3, k: 1 }); block(31.5, 11.3, 1, 1);
 
-  add({ t: 'rug',      x: 1.6, y: 7.0, w: 6, d: 3.4, c: '#3a1620' });
-  add({ t: 'sofa',     x: 9.0, y: 6.4, w: 1.6, d: 3.2, dir: 'w', c: '#2b1a2e' });  block(9.0, 6.4, 1.6, 3.2);
-  add({ t: 'lowTable', x: 6.8, y: 7.6, w: 1.6, d: 1.6 });                          block(6.8, 7.6, 1.6, 1.6);
-  add({ t: 'trophy',   x: 11.2, y: 2.4 });                                         block(11.2, 2.4, 1.2, 1.2);
-  add({ t: 'plant',    x: 11.6, y: 15.4, k: 1 });                                  block(11.6, 15.4, 1, 1);
-  add({ t: 'plant',    x: 1.4,  y: 15.8, k: 0 });                                  block(1.4, 15.8, 1, 1);
-  add({ t: 'cooler',   x: 11.6, y: 8.6 });                                         block(11.6, 8.6, 1, 1);
+  /* ---------- QUALIDADE (QA) ---------- */
+  [34.3, 38.5, 42.7].forEach((x, i) => estacao('QA-' + (i + 1), 'qa', x, 1.6, 's', 'phones'));
+  [34.3, 38.5, 42.7].forEach((x, i) => estacao('QA-' + (i + 4), 'qa', x, 8,   'n', 'phones'));
+  add({ t: 'plant', x: 45.6, y: 11.3, k: 0 }); block(45.6, 11.3, 1, 1);
 
-  /* ---------- LOUNGE ---------- */
-  [2.2, 4.2, 6.2].forEach((x, i) => {
-    const o = add({ t: 'arcade', x, y: 23.2, w: 1.5, d: 1.2, hue: [12, 190, 300][i] });
-    block(x, 23.2, 1.5, 1.2);
-    restSlots.push({ id: 'ARC' + i, label: 'arcade', x: x + 0.75, y: 25.0, facing: 'n',
-                     act: 'jogando fliperama', obj: o });
-  });
-
-  const pool = add({ t: 'poolTable', x: 9.6, y: 25, w: 4.6, d: 2.6 });
-  block(9.6, 25, 4.6, 2.6);
-  restSlots.push({ id: 'POOL0', label: 'sinuca', x: 8.6,  y: 26.3, facing: 'e', act: 'na sinuca', obj: pool });
-  restSlots.push({ id: 'POOL1', label: 'sinuca', x: 15.0, y: 26.3, facing: 'w', act: 'na sinuca', obj: pool });
-  restSlots.push({ id: 'POOL2', label: 'sinuca', x: 11.9, y: 24.3, facing: 's', act: 'na sinuca', obj: pool });
-
-  const peb = add({ t: 'foosball', x: 9.8, y: 29.4, w: 4.2, d: 2 });
-  block(9.8, 29.4, 4.2, 2);
-  restSlots.push({ id: 'PEB0', label: 'pebolim', x: 8.6,  y: 30.4, facing: 'e', act: 'no pebolim', obj: peb });
-  restSlots.push({ id: 'PEB1', label: 'pebolim', x: 14.7, y: 30.4, facing: 'w', act: 'no pebolim', obj: peb });
-
-  add({ t: 'tvWall', x: 18.4, y: 23.15, w: 5, d: 0.5 });
-  const sofaL = add({ t: 'sofa', x: 18.6, y: 26.4, w: 4.6, d: 1.6, dir: 'n', c: '#241c3c' });
-  block(18.6, 26.4, 4.6, 1.6);
-  ['SOF0', 'SOF1', 'SOF2'].forEach((id, i) =>
-    restSlots.push({ id, label: 'sofá', x: 19.7 + i * 1.4, y: 27.3, facing: 'n',
-                     sit: true, act: 'vendo TV', obj: sofaL }));
-  add({ t: 'rug', x: 18.2, y: 24.4, w: 5.4, d: 2, c: '#1b2440' });
-
-  [[25.2, 27.6, 24], [26.8, 29.4, 300], [24.4, 30.2, 160]].forEach((b, i) => {
-    const o = add({ t: 'beanbag', x: b[0], y: b[1], hue: b[2] });
-    block(b[0], b[1], 1.2, 1.2);
-    restSlots.push({ id: 'BAG' + i, label: 'puff', x: b[0] + 0.6, y: b[1] + 0.55,
-                     facing: 's', sit: true, act: 'jogando no celular', obj: o });
-  });
-
-  const bar = add({ t: 'bar', x: 2, y: 30.4, w: 5.4, d: 1.4 });
-  block(2, 30.4, 5.4, 1.4);
-  restSlots.push({ id: 'BAR0', label: 'bar', x: 3.0, y: 29.4, facing: 's', act: 'tomando um café', obj: bar });
-  restSlots.push({ id: 'BAR1', label: 'bar', x: 5.4, y: 29.4, facing: 's', act: 'tomando um café', obj: bar });
-
-  add({ t: 'vending',     x: 26.6, y: 23.2 });                block(26.6, 23.2, 1.2, 1.2);
-  add({ t: 'plant', x: 16.6, y: 23.4, k: 1 });                 block(16.6, 23.4, 1, 1);
-  add({ t: 'plant', x: 27.0, y: 31.2, k: 0 });                 block(27.0, 31.2, 1, 1);
-  add({ t: 'neonSign', x: 15.4, y: 23.2, txt: 'GAME ZONE', hue: 300 });
+  /* ---------- DESENVOLVIMENTO: open space com 12 estações ---------- */
+  const COLS_DEV = [1.4, 5.2, 9.0, 12.8, 16.6, 20.4];
+  COLS_DEV.forEach((x, i) => estacao('DEV-' + String(i + 1).padStart(2, '0'), 'dev', x, 20.4, 's', i % 2 ? 'dual' : null));
+  COLS_DEV.forEach((x, i) => estacao('DEV-' + String(i + 7).padStart(2, '0'), 'dev', x, 26.6, 'n', i % 2 ? null : 'dual'));
+  add({ t: 'plant', x: 1.2,  y: 31.4, k: 0 }); block(1.2, 31.4, 1, 1);
+  add({ t: 'plant', x: 23.6, y: 31.4, k: 1 }); block(23.6, 31.4, 1, 1);
+  add({ t: 'printer', x: 10.6, y: 31.3, w: 1.3, d: .9 }); block(10.6, 31.3, 1.3, .9);
 
   /* ---------- SALA DE REUNIÃO ---------- */
-  const mtable = add({ t: 'meetTable', x: 36, y: 26, w: 7, d: 3.2 });
-  block(36, 26, 7, 3.2);
-  [36.8, 38.8, 40.8].forEach((x, i) => {
-    const s = { id: 'MT' + i, x, y: 25.2, facing: 's', sit: true, obj: mtable };
+  const mtable = add({ t: 'meetTable', x: 27.6, y: 24, w: 7, d: 3.2 });
+  block(27.6, 24, 7, 3.2);
+  [28.4, 30.6, 32.8].forEach((x, i) => {
+    const s = { id: 'MT' + i, x, y: 23.2, facing: 's', sit: true, obj: mtable };
     meetSlots.push(s); cadeira(s, 'chairSimple');
   });
-  [36.8, 38.8, 40.8].forEach((x, i) => {
-    const s = { id: 'MB' + i, x, y: 29.9, facing: 'n', sit: true, obj: mtable };
+  [28.4, 30.6, 32.8].forEach((x, i) => {
+    const s = { id: 'MB' + i, x, y: 27.9, facing: 'n', sit: true, obj: mtable };
     meetSlots.push(s); cadeira(s, 'chairSimple');
   });
-  [{ id: 'ML', x: 35.2, y: 27.6, facing: 'e' }, { id: 'MR', x: 43.7, y: 27.6, facing: 'w' }]
+  [{ id: 'ML', x: 26.8, y: 25.6, facing: 'e' }, { id: 'MR', x: 35.3, y: 25.6, facing: 'w' }]
     .forEach(p => {
       const s = Object.assign({ sit: true, obj: mtable }, p);
       meetSlots.push(s); cadeira(s, 'chairSimple');
     });
+  add({ t: 'tvWall', x: 28.6, y: 19.1, w: 5, d: 0.5, meeting: true });
+  add({ t: 'plant', x: 26.2, y: 31.4, k: 0 }); block(26.2, 31.4, 1, 1);
+  add({ t: 'plant', x: 34.6, y: 31.4, k: 1 }); block(34.6, 31.4, 1, 1);
 
-  add({ t: 'tvWall', x: 37.5, y: 23.15, w: 4.6, d: 0.5, meeting: true });
-  add({ t: 'plant', x: 33.4, y: 31.2, k: 0 });               block(33.4, 31.2, 1, 1);
+  /* ---------- JOGOS ---------- */
+  [37.3, 39.0].forEach((x, i) => {
+    const o = add({ t: 'arcade', x, y: 19.2, w: 1.5, d: 1.2, hue: [20, 210][i] });
+    block(x, 19.2, 1.5, 1.2);
+    restSlots.push({ id: 'ARC' + i, label: 'fliperama', x: x + 0.75, y: 21.0, facing: 'n',
+                     act: 'jogando fliperama', obj: o });
+  });
+  add({ t: 'vending', x: 45.4, y: 19.2 }); block(45.4, 19.2, 1.2, 1.2);
+  add({ t: 'neonSign', x: 43.0, y: 18, txt: 'JOGOS', cor: BR.laranja });
 
-  /* ---------- CORREDOR / RECEPÇÃO ---------- */
-  add({ t: 'elevator',  x: 46, y: 19.2, w: 1, d: 2 });
-  add({ t: 'reception', x: 42.6, y: 19, w: 2.6, d: 1 }); block(42.6, 19, 2.6, 1);
-  add({ t: 'plant', x: 37.2, y: 19, k: 0 }); block(37.2, 19, 1, 1);
-  add({ t: 'plant', x: 34.0, y: 19, k: 1 }); block(34.0, 19, 1, 1);
+  const pool = add({ t: 'poolTable', x: 38.2, y: 22.6, w: 4.6, d: 2.6 });
+  block(38.2, 22.6, 4.6, 2.6);
+  restSlots.push({ id: 'POOL0', label: 'sinuca', x: 37.3, y: 23.9, facing: 'e', act: 'na sinuca', obj: pool });
+  restSlots.push({ id: 'POOL1', label: 'sinuca', x: 43.6, y: 23.9, facing: 'w', act: 'na sinuca', obj: pool });
+  restSlots.push({ id: 'POOL2', label: 'sinuca', x: 40.5, y: 21.7, facing: 's', act: 'na sinuca', obj: pool });
 
-  add({ t: 'rack', x: 8.4,  y: 19, label: 'DADOS',     hue: 190 }); block(8.4, 19, 1.2, 1);
-  add({ t: 'rack', x: 10.0, y: 19, label: 'AGENTES',   hue: 20  }); block(10.0, 19, 1.2, 1);
-  add({ t: 'rack', x: 11.6, y: 19, label: 'CORE',      hue: 280 }); block(11.6, 19, 1.2, 1);
+  const peb = add({ t: 'foosball', x: 38.4, y: 27.2, w: 4.2, d: 2 });
+  block(38.4, 27.2, 4.2, 2);
+  restSlots.push({ id: 'PEB0', label: 'pebolim', x: 37.4, y: 28.2, facing: 'e', act: 'no pebolim', obj: peb });
+  restSlots.push({ id: 'PEB1', label: 'pebolim', x: 43.5, y: 28.2, facing: 'w', act: 'no pebolim', obj: peb });
 
-  [2.2, 17.4, 27.4].forEach((x, i) => { add({ t: 'plant', x, y: 19, k: i % 2 }); block(x, 19, 1, 1); });
-  add({ t: 'neonSign', x: 20.4, y: 19, txt: String((window.ESCRITORIO && ESCRITORIO.nome) || 'ESCRITÓRIO').toUpperCase().slice(0, 16), hue: 190 });
+  [[44.7, 25.6, 24], [44.9, 30.0, 215]].forEach((b, i) => {
+    const o = add({ t: 'beanbag', x: b[0], y: b[1], hue: b[2] });
+    block(b[0], b[1], 1.2, 1.2);
+    restSlots.push({ id: 'BAG' + i, label: 'puff', x: b[0] + 0.6, y: b[1] + 0.55,
+                     facing: 's', sit: true, act: 'descansando no puff', obj: o });
+  });
+
+  const bar = add({ t: 'bar', x: 38.6, y: 31.2, w: 4.6, d: 1.2 });
+  block(38.6, 31.2, 4.6, 1.2);
+  restSlots.push({ id: 'BAR0', label: 'café', x: 39.6, y: 30.3, facing: 's', act: 'tomando um café', obj: bar });
+  restSlots.push({ id: 'BAR1', label: 'café', x: 42.0, y: 30.3, facing: 's', act: 'tomando um café', obj: bar });
+  add({ t: 'plant', x: 37.2, y: 31.4, k: 1 }); block(37.2, 31.4, 1, 1);
+
+  /* ---------- RECEPÇÃO & CIRCULAÇÃO ---------- */
+  add({ t: 'elevator',  x: 46, y: 14.2, w: 1, d: 3.6 });
+  add({ t: 'reception', x: 41.4, y: 14.15, w: 3, d: .9 }); block(41.4, 14.15, 3, .9);
+  // pilares da estrutura do prédio, alinhados com as divisórias
+  [11.15, 22.15, 33.15].forEach(x => { add({ t: 'column', x, y: 14.15, w: .7, d: .7 }); block(x, 14.15, .7, .7); });
+  add({ t: 'sofa', x: 33.4, y: 17.05, w: 2.6, d: .9, dir: 'n', c: BR.marinho }); block(33.4, 17.05, 2.6, .9);
+  add({ t: 'printer', x: 6.6, y: 17.05, w: 1.3, d: .85 }); block(6.6, 17.05, 1.3, .85);
+  add({ t: 'cooler', x: 19.1, y: 17.0 });                    block(19.1, 17.0, 1, 1);
+  add({ t: 'plant', x: 1.2,  y: 17.0, k: 0 });               block(1.2, 17.0, 1, 1);
+  add({ t: 'plant', x: 24.4, y: 17.0, k: 1 });               block(24.4, 17.0, 1, 1);
+  add({ t: 'plant', x: 38.2, y: 17.0, k: 0 });               block(38.2, 17.0, 1, 1);
+  add({ t: 'extintor', x: 46.3, y: 17.3 });                  block(46.3, 17.3, .5, .5);
+  add({ t: 'extintor', x: 1.2, y: 14.3 });                   block(1.2, 14.3, .5, .5);
+  add({ t: 'exitSign', x: 2.4, y: 15.6 });
 
   /* ===========================================================
      DESENHO
@@ -183,9 +179,9 @@ const FURN = (() => {
      feito em 2x para continuar nítido no zoom. O que tem RGB ou animação
      — mesa, arcade, rack, TV, planta — continua sendo desenhado ao vivo. */
   const ALTURA_CACHE = {
-    chairGamer: 78, chairBoss: 84, chairSimple: 58, expositor: 96,
+    chairGamer: 78, chairBoss: 84, chairSimple: 58, chairOffice: 80, expositor: 96,
     pilhaCaixas: 118, poolTable: 56, foosball: 52, sofa: 60,
-    rug: 12, lowTable: 40, cooler: 64
+    rug: 12, lowTable: 40, cooler: 64, column: 124, printer: 50, extintor: 44
   };
   const ESC_CACHE = 2;
   const cacheMovel = new Map();
@@ -245,6 +241,105 @@ const FURN = (() => {
   }
 
   const DRAW = {
+
+    /* ================= MESA CORPORATIVA =================
+       Tampo branco, pés de aço escovado, monitor e o que for da função:
+       notebook (GP), dois monitores (TL/dev), mesa digitalizadora (UX),
+       celulares de teste (QA).                                         */
+    deskWork(ctx, o, t) {
+      const { x, y, w, d } = o;
+      const tela = WORLD.BRAND.claro;
+      const telaVisivel = (o.face === 'n');
+      ISO.shadow(ctx, x + w / 2, y + d / 2, Math.max(w, d) * .55, .14);
+
+      // pés em "U" de aço e calha de cabos
+      const aco = '#aeb8c6';
+      ISO.box(ctx, x + .08,     y + .1, .1, d - .2, 25, 0, aco, { top: '#c6ced9' });
+      ISO.box(ctx, x + w - .18, y + .1, .1, d - .2, 25, 0, aco, { top: '#c6ced9' });
+      ISO.box(ctx, x + .2, y + .2, w - .4, .08, 5, 18, '#c6ced9');
+      // tampo
+      ISO.box(ctx, x - .04, y - .04, w + .08, d + .08, 3, TOP - 3, '#eef1f5',
+              { top: o.vip ? '#f1e6d8' : '#fbfcfd', left: '#dde2e9', right: '#c9d0da', line: 'rgba(11,42,85,.14)' });
+      // filete da cor da sala na borda da frente
+      ISO.quad(ctx, [S(x - .04, y + d + .04, TOP), S(x + w + .04, y + d + .04, TOP),
+                     S(x + w + .04, y + d + .04, TOP - 1.4), S(x - .04, y + d + .04, TOP - 1.4)],
+               ISO.rgba(o.accent || WORLD.BRAND.azul, .9));
+
+      const monY = o.face === 'n' ? y + .12 : y + .62;
+      const tecY = o.face === 'n' ? y + .78 : y + .08;
+      const pecas = [];
+      if (o.extra === 'dual') {
+        pecas.push([monY, () => { monitor(ctx, x + .25, monY, 1.25, telaVisivel, o.busy, tela, t, o);
+                                  monitor(ctx, x + 1.55, monY, 1.25, telaVisivel, o.busy, tela, t, o); }]);
+      } else {
+        pecas.push([monY, () => monitor(ctx, x + w / 2 - .95, monY, 1.6, telaVisivel, o.busy, tela, t, o)]);
+      }
+      pecas.push([tecY, () => tecladoClaro(ctx, x + w / 2 - .85, tecY)]);
+      pecas.push([y + d / 2, () => caneca(ctx, x + .35, y + d / 2, TOP, o.sabor, .85)]);
+      if (o.extra === 'notebook') {
+        const ny = o.face === 'n' ? y + .7 : y + .15;
+        pecas.push([ny, () => {
+          ISO.box(ctx, x + w - .8, ny, .5, .4, 1.5, TOP, WORLD.BRAND.laranja, { top: '#ff9a52' });
+          ISO.plane(ctx, x + w - .76, ny + .04, .03, .32, TOP + 1.6, 'rgba(255,255,255,.7)');
+        }]);
+      } else if (o.extra === 'tablet') {
+        const ny = o.face === 'n' ? y + .66 : y + .14;
+        pecas.push([ny, () => {
+          ISO.box(ctx, x + w - .9, ny, .7, .5, 1.2, TOP, '#2b3444', { top: '#384356' });
+          ISO.plane(ctx, x + w - .84, ny + .05, .58, .4, TOP + 1.3, ISO.rgba(WORLD.BRAND.laranja, .25));
+          ISO.box(ctx, x + w - .25, ny + .1, .04, .34, 1.2, TOP + 1.3, '#e9edf2');
+        }]);
+      } else if (o.extra === 'phones') {
+        const ny = o.face === 'n' ? y + .75 : y + .15;
+        pecas.push([ny, () => {
+          [0, .3].forEach((dx, i) => {
+            ISO.box(ctx, x + w - .75 + dx, ny, .2, .36, 1.2, TOP, '#1d2430', { top: '#232c3a' });
+            ISO.plane(ctx, x + w - .73 + dx, ny + .03, .16, .3, TOP + 1.3,
+                      i ? ISO.rgba(WORLD.BRAND.azul, .8) : ISO.rgba('#3ccf8e', .8));
+          });
+        }]);
+      }
+      emOrdem(pecas);
+    },
+
+    chairOffice(ctx, o) { cadeiraBase(ctx, o, '#2e3a4e', o.cor || WORLD.BRAND.azul, 30, true); },
+
+    column(ctx, o) {
+      const { x, y, w, d } = o;
+      ISO.shadow(ctx, x + w / 2, y + d / 2, .55, .12);
+      ISO.box(ctx, x, y, w, d, WORLD.WALL_H, 0, '#eef1f5',
+              { top: '#c4cedb', left: '#e4e8ee', right: '#cfd6df', line: 'rgba(11,42,85,.10)' });
+      ISO.box(ctx, x - .02, y - .02, w + .04, d + .04, 5, 0, '#b9c4d2');
+    },
+
+    printer(ctx, o) {
+      const { x, y, w, d } = o;
+      ISO.shadow(ctx, x + w / 2, y + d / 2, .8, .14);
+      ISO.box(ctx, x, y, w, d, 22, 0, '#d4dae3', { top: '#e3e8ee' });
+      ISO.box(ctx, x + .05, y + .05, w - .1, d - .1, 12, 22, '#eef1f5', { top: '#f8f9fb' });
+      ISO.box(ctx, x + .2, y + d - .2, w - .4, .12, 2, 26, '#2b3444');
+      ISO.plane(ctx, x + .3, y + .15, w - .6, .45, 34.2, '#ffffff');
+      ISO.plane(ctx, x + w - .3, y + .2, .12, .12, 34.3, '#3ccf8e');
+    },
+
+    extintor(ctx, o) {
+      const { x, y } = o;
+      ISO.shadow(ctx, x + .25, y + .25, .25, .18);
+      ISO.cyl(ctx, x + .25, y + .25, .12, 24, 2, '#d93b30');
+      ISO.cyl(ctx, x + .25, y + .25, .05, 5, 26, '#2b3444');
+    },
+
+    exitSign(ctx, o) {
+      const { x, y } = o;
+      ISO.box(ctx, x, y, 1.2, .08, 14, 92, '#2fa35a');
+      faceY(ctx, x, y + .08, 1.2, 105, (c, len) => {
+        c.fillStyle = '#2fa35a'; c.fillRect(0, 0, len, 13);
+        c.fillStyle = '#ffffff'; c.font = "700 8px 'Barlow Semi Condensed', sans-serif";
+        c.textAlign = 'center'; c.textBaseline = 'middle';
+        c.fillText('SAÍDA  ⟵', len / 2, 7);
+      });
+      ISO.box(ctx, x + .58, y + .02, .04, .04, 10, 106, '#9aa6b6');
+    },
 
     /* ================= MESA GAMER =================
        Suporta mesa no eixo Y (face 'n'/'s') e no eixo X (face 'e'/'w').
@@ -346,9 +441,9 @@ const FURN = (() => {
     chairGamer(ctx, o) { const a = ISO.hsl(o.hue, 85, 52);
       cadeiraBase(ctx, o, '#14171f', a, 30, true); },
     chairBoss(ctx, o)  {
-      cadeiraBase(ctx, o, '#1a1419', '#7c6cff', 33, true); },
+      cadeiraBase(ctx, o, '#1f2a3d', WORLD.BRAND.laranja, 34, true); },
     chairSimple(ctx, o){
-      cadeiraBase(ctx, o, '#1c2234', '#4a5a86', 22, false); },
+      cadeiraBase(ctx, o, '#d6dce5', WORLD.BRAND.laranja, 22, false); },
 
     /* ---------- o resto do mobiliário ---------- */
     arcade(ctx, o, t) {
@@ -414,7 +509,7 @@ const FURN = (() => {
         ISO.box(ctx, bx, y - .18, .07, d + .36, 4, 44, '#9aa6c4');
         for (let j = 0; j < 3; j++)
           ISO.box(ctx, bx - .07, y + .5 + j * ((d - 1) / 2) - .1, .22, .22, 11, 34,
-                  i % 2 ? '#7c6cff' : '#18a2ff');
+                  i % 2 ? WORLD.BRAND.laranja : WORLD.BRAND.azul);
       }
     },
 
@@ -471,15 +566,20 @@ const FURN = (() => {
       faceY(ctx, x + .02, y + .22, w - .04, z + h - 4, (c, len) => {
         c.fillStyle = '#05070f'; c.fillRect(0, 0, len, h - 8);
         if (o.meeting) {
+          c.fillStyle = WORLD.BRAND.marinho; c.fillRect(0, 0, len, h - 8);
+          WORLD.logo(c, 10, 8, 20);
           c.textAlign = 'left'; c.textBaseline = 'middle';
           c.font = "700 9px 'Barlow Semi Condensed', sans-serif";
-          c.fillStyle = '#38bdf8'; c.fillText('SALA DE REUNIÃO', 10, 11);
-          c.font = "600 8px 'Barlow Semi Condensed', sans-serif";
-          c.fillStyle = 'rgba(170,182,210,.8)';
-          c.fillText(new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: '2-digit' }).toUpperCase(), 12, 27);
+          c.fillStyle = '#ffffff'; c.fillText('SPRINT REVIEW', 36, 13);
+          c.font = "600 7.5px 'Barlow Semi Condensed', sans-serif";
+          c.fillStyle = WORLD.BRAND.pessego;
+          c.fillText(new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: '2-digit' }).toUpperCase(), 36, 23);
+          const metas = [.82, .64, .91];
           for (let i = 0; i < 3; i++) {
-            c.fillStyle = ISO.rgba('#38bdf8', .18 + .1 * i);
-            c.fillRect(12, 38 + i * 9, (len - 24) * (.35 + .25 * ((Math.sin(t * .6 + i) + 1) / 2)), 4);
+            c.fillStyle = 'rgba(255,255,255,.12)';
+            c.fillRect(12, 34 + i * 6, len - 24, 3);
+            c.fillStyle = i === 1 ? WORLD.BRAND.laranja : WORLD.BRAND.claro;
+            c.fillRect(12, 34 + i * 6, (len - 24) * metas[i] * (.9 + .1 * Math.sin(t * .5 + i)), 3);
           }
         } else {
           for (let i = 0; i < 5; i++) {
@@ -488,22 +588,18 @@ const FURN = (() => {
           }
         }
       });
-      ctx.save(); ctx.globalCompositeOperation = 'lighter';
-      const gc = S(x + w / 2, y + .3, z + h / 2);
-      ISO.glow(ctx, gc.x, gc.y, 110, o.meeting ? '#38bdf8' : '#7aa2ff', .18);
-      ctx.restore();
     },
 
     bar(ctx, o, t) {
       const { x, y, w, d } = o;
-      ISO.shadow(ctx, x + w / 2, y + d / 2, 2.3, .3);
-      ISO.box(ctx, x, y, w, d, 46, 0, '#14182a', { top: '#232a44' });
-      ctx.save(); ctx.globalCompositeOperation = 'lighter';
-      ISO.quad(ctx, [S(x, y + d, 46), S(x + w, y + d, 46), S(x + w, y + d, 41), S(x, y + d, 41)],
-               ISO.rgba(ISO.hsl((t * 46) % 360, 95, 58), .7));
-      ctx.restore();
-      dispenser(ctx, x + 1.1, y + .55, '#7c6cff', t);
-      dispenser(ctx, x + 2.6, y + .55, '#c4b8ff', t + 1.4);
+      ISO.shadow(ctx, x + w / 2, y + d / 2, 2.3, .16);
+      ISO.box(ctx, x, y, w, d, 46, 0, '#ffffff', { top: '#f0f2f5', left: '#eef1f5', right: '#d6dce5' });
+      ISO.quad(ctx, [S(x, y + d, 44), S(x + w, y + d, 44), S(x + w, y + d, 40), S(x, y + d, 40)],
+               WORLD.BRAND.laranja);
+      // máquina de espresso
+      ISO.box(ctx, x + 2.6, y + .2, .9, .7, 26, 46, '#2b3444', { top: '#3a4559' });
+      ISO.box(ctx, x + 2.75, y + .82, .6, .1, 4, 58, '#c6ced9');
+      dispenser(ctx, x + 1.1, y + .55, WORLD.BRAND.laranja, t);
       for (let i = 0; i < 4; i++) ISO.cyl(ctx, x + .35, y + .3 + i * .22, .08, 9, 46, '#e9edf8');
     },
 
@@ -546,37 +642,51 @@ const FURN = (() => {
 
     elevator(ctx, o, t) {
       const { x, y, d } = o;
-      const neon = ISO.hsl((t * 34) % 360, 92, 58);
-      WORLD.wallFace(ctx, 'w', x, y, d, 96, (c, len) => {
-        c.fillStyle = '#0a0d18'; ISO.rrect(c, 4, 6, len - 8, 78, 4); c.fill();
-        c.strokeStyle = ISO.rgba(neon, .8); c.lineWidth = 2; c.stroke();
-        c.fillStyle = ISO.rgba(neon, .35); c.fillRect(len / 2 - 1, 8, 2, 74);
-        c.textAlign = 'center'; c.font = "700 9px 'Barlow Semi Condensed', sans-serif";
-        c.fillStyle = ISO.rgba(neon, .9);
-        c.fillText('▲ ENTRADA', len / 2, 0);
+      const andar = 12;
+      WORLD.wallFace(ctx, 'w', x, y, d, 100, (c, len) => {
+        const portas = 2, gap = 12, pw = (len - gap * (portas + 1)) / portas;
+        for (let i = 0; i < portas; i++) {
+          const px = gap + i * (pw + gap);
+          c.fillStyle = WORLD.BRAND.marinho; ISO.rrect(c, px - 3, 10, pw + 6, 88, 3); c.fill();
+          const g = c.createLinearGradient(px, 0, px + pw, 0);
+          g.addColorStop(0, '#c7d0db'); g.addColorStop(.5, '#e8ecf1'); g.addColorStop(1, '#b4bfcc');
+          c.fillStyle = g; c.fillRect(px, 14, pw, 84);
+          c.fillStyle = 'rgba(11,42,85,.35)'; c.fillRect(px + pw / 2 - .6, 14, 1.2, 84);
+          // indicador do andar
+          c.fillStyle = '#0b1220'; ISO.rrect(c, px + pw / 2 - 14, 0, 28, 9, 2); c.fill();
+          c.fillStyle = WORLD.BRAND.laranja; c.font = "700 7.5px 'Barlow', sans-serif";
+          c.textAlign = 'center'; c.textBaseline = 'middle';
+          const sobe = Math.sin(t * .4 + i * 2) > 0;
+          c.fillText((sobe ? '▲ ' : '▼ ') + andar, px + pw / 2, 5);
+        }
       });
     },
 
     reception(ctx, o, t) {
       const { x, y, w, d } = o;
-      ISO.shadow(ctx, x + w / 2, y + d / 2, 1.6, .28);
-      ISO.box(ctx, x, y, w, d, 40, 0, '#161b2e', { top: '#242c46' });
-      ctx.save(); ctx.globalCompositeOperation = 'lighter';
-      ISO.quad(ctx, [S(x, y + d, 40), S(x + w, y + d, 40), S(x + w, y + d, 35), S(x, y + d, 35)],
-               ISO.rgba(ISO.hsl((t * 40) % 360, 92, 58), .66));
-      ctx.restore();
-      faceY(ctx, x, y + d, w, 56, (c, len) => {
-        c.textAlign = 'center'; c.font = "700 10px 'Barlow', sans-serif";
-        c.fillStyle = 'rgba(233,237,248,.85)'; c.letterSpacing = '2px';
-        c.fillText('RECEPÇÃO', len / 2, 9);
+      ISO.shadow(ctx, x + w / 2, y + d / 2, 1.6, .16);
+      ISO.box(ctx, x, y, w, d, 40, 0, '#ffffff', { top: '#f3f5f8', left: '#f6f8fa', right: '#d6dce5' });
+      ISO.box(ctx, x - .05, y - .05, w + .1, d + .1, 2, 40, '#e3e8ee', { top: '#fbfcfd' });
+      faceY(ctx, x, y + d, w, 38, (c, len) => {
+        c.fillStyle = WORLD.BRAND.marinho; c.fillRect(0, 0, len, 30);
+        c.fillStyle = WORLD.BRAND.laranja; c.fillRect(0, 30, len, 3);
+        WORLD.logo(c, 10, 5, 20);
+        c.textAlign = 'left'; c.textBaseline = 'middle';
+        c.font = "700 9px 'Barlow', sans-serif"; c.letterSpacing = '2px';
+        c.fillStyle = '#ffffff'; c.fillText('RECEPÇÃO', 38, 11);
+        c.font = "600 6.5px 'Barlow Semi Condensed', sans-serif"; c.letterSpacing = '1px';
+        c.fillStyle = WORLD.BRAND.pessego; c.fillText('SQUAD PAGAR & RECEBER', 38, 21);
       });
-      caneca(ctx, x + w - .35, y + .5, 40, 0, .8);
+      // monitor e caneca do balcão
+      ISO.box(ctx, x + .5, y + .2, .9, .08, 16, 44, '#1d2430');
+      caneca(ctx, x + w - .35, y + .5, 42, 0, .8);
+      void t;
     },
 
     plant(ctx, o, t) {
       const { x, y } = o;
-      ISO.shadow(ctx, x + .5, y + .5, .5, .26);
-      ISO.cyl(ctx, x + .5, y + .5, .3, 20, 0, o.k ? '#3a2b22' : '#242b3e');
+      ISO.shadow(ctx, x + .5, y + .5, .5, .16);
+      ISO.cyl(ctx, x + .5, y + .5, .3, 20, 0, o.k ? '#f1f3f6' : '#cfd6df');
       const base = S(x + .5, y + .5, 20);
       const nn = o.k ? 7 : 9;
       for (let i = 0; i < nn; i++) {
@@ -595,7 +705,7 @@ const FURN = (() => {
     cooler(ctx, o) {
       const { x, y } = o;
       ISO.shadow(ctx, x + .5, y + .5, .5, .26);
-      ISO.box(ctx, x + .1, y + .1, .8, .8, 40, 0, '#1a2136', { top: '#252d47' });
+      ISO.box(ctx, x + .1, y + .1, .8, .8, 40, 0, '#e3e8ee', { top: '#f3f5f8' });
       ISO.cyl(ctx, x + .5, y + .5, .3, 32, 40, 'rgba(120,200,255,.42)');
       ISO.cyl(ctx, x + .5, y + .5, .3, 12, 40, 'rgba(60,160,255,.62)');
     },
@@ -615,11 +725,11 @@ const FURN = (() => {
 
     neonSign(ctx, o, t) {
       const { x, y } = o;
-      const neon = ISO.hsl((o.hue + t * 30) % 360, 95, 62);
+      const neon = o.cor || ISO.hsl((o.hue + t * 30) % 360, 95, 62);
       WORLD.wallFace(ctx, 'n', x, y, 3, 92, (c, len) => {
         c.textAlign = 'center'; c.textBaseline = 'middle';
         c.font = "700 17px 'Barlow', sans-serif";
-        c.shadowColor = ISO.rgba(neon, .95); c.shadowBlur = 16;
+        c.shadowColor = ISO.rgba(neon, .6); c.shadowBlur = 8;
         c.fillStyle = ISO.rgba(neon, .95); c.letterSpacing = '2px';
         c.fillText(o.txt, len / 2, 16);
         c.shadowBlur = 0; c.letterSpacing = '0px';
@@ -630,14 +740,13 @@ const FURN = (() => {
 
     meetTable(ctx, o, t) {
       const { x, y, w, d } = o;
-      ISO.shadow(ctx, x + w / 2, y + d / 2, 3.2, .3);
-      ISO.box(ctx, x + w / 2 - .5, y + d / 2 - .4, 1, .8, 24, 0, '#171b2c');
-      ISO.box(ctx, x, y, w, d, 4, 24, '#1b2036', { top: '#2b3350' });
-      ISO.plane(ctx, x + .25, y + .25, w - .5, d - .5, TOP + .2, 'rgba(120,160,255,.08)');
-      ctx.save(); ctx.globalCompositeOperation = 'lighter';
-      ISO.plane(ctx, x + w / 2 - 1.2, y + d / 2 - .5, 2.4, 1, TOP + .3,
-                ISO.rgba(ISO.hsl((t * 26) % 360, 90, 58), .16));
-      ctx.restore();
+      ISO.shadow(ctx, x + w / 2, y + d / 2, 3.2, .14);
+      ISO.box(ctx, x + w / 2 - .5, y + d / 2 - .4, 1, .8, 24, 0, '#aeb8c6');
+      ISO.box(ctx, x, y, w, d, 4, 24, '#c9a77c', { top: '#d8bb94', left: '#c29f73', right: '#a8875e' });
+      // passa-cabos com tomada no centro
+      ISO.plane(ctx, x + w / 2 - .6, y + d / 2 - .2, 1.2, .4, TOP + .2, '#2b3444');
+      ISO.plane(ctx, x + w / 2 - .5, y + d / 2 - .1, .2, .2, TOP + .3, WORLD.BRAND.laranja);
+      void t;
       caneca(ctx, x + 1.2, y + d / 2, TOP, 0, .8);
       caneca(ctx, x + w - 1.2, y + d / 2, TOP, 1, .8);
     }
@@ -773,6 +882,13 @@ const FURN = (() => {
     ISO.plane(ctx, x + .04, y + .04, .28, 1.37, TOP + 3.2, ISO.rgba(neon, .33));
     ctx.restore();
     ISO.box(ctx, x + .06, y + 1.62, .26, .2, 3.5, TOP, '#1b2130');
+  }
+
+  /** teclado e mouse claros, sem RGB */
+  function tecladoClaro(ctx, x, y) {
+    ISO.box(ctx, x, y, 1.4, .34, 2.4, TOP, '#d8dee6', { top: '#f1f3f6' });
+    ISO.plane(ctx, x + .06, y + .06, 1.28, .22, TOP + 2.5, 'rgba(11,42,85,.10)');
+    ISO.box(ctx, x + 1.58, y + .06, .18, .24, 2.6, TOP, '#d8dee6', { top: '#f1f3f6' });
   }
 
   function teclado(ctx, x, y, neon) {

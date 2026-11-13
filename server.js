@@ -23,8 +23,10 @@ const ROOT = __dirname;
    padrão abaixo; o modelo comentado está em data/config.exemplo.json. */
 const CONFIG_ARQ = path.join(ROOT, 'data', 'config.json');
 const CONFIG_PADRAO = {
-  nome: 'Escritório de Agentes', subtitulo: 'painel dos seus agentes de IA',
-  dono: 'Você', empresa: '', porta: 4321,
+  nome: 'Squad Pagar & Receber', subtitulo: 'Tecnologia · Meios de Pagamento',
+  dono: 'Você',
+  empresa: 'Squad de TI de um banco, responsável pelos fluxos de pagamentos (Pix, TED, agendamentos) e recebimentos (boleto, QR Code, conciliação).',
+  porta: 4321,
   reuniao: { automatica: false, dias: [1, 5], hora: 11, minuto: 0, duracaoMin: 30, modelo: 'sonnet',
              foco: '', meta: { descricao: '', alvo: 0, feito: 0, unidade: 'resultados', ate: '' } }
 };
