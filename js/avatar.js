@@ -12,8 +12,8 @@ const AVATAR = (() => {
   const HAIR_S = ['curto', 'fade', 'ondulado', 'cacheado', 'longo', 'rabo',
                   'coque', 'raspado', 'moicano', 'chanel', 'afro', 'franja'];
   // guarda-roupa de escritório de banco: azuis, branco, cinza e um toque de laranja
-  const SHIRT = ['#0A4DA2', '#0B2A55', '#3E8EDE', '#e9edf2', '#ffffff', '#64748b',
-                 '#FF7A1A', '#9cc3ee', '#1f2937', '#cbd5e1', '#2563eb', '#f4a261'];
+  const SHIRT = ['#123C8C', '#0A1F5C', '#3F7FD6', '#e9edf2', '#ffffff', '#64748b',
+                 '#EC7000', '#9cc3ee', '#1f2937', '#cbd5e1', '#2563eb', '#f4a261'];
   const PANTS = ['#26304a', '#1b2030', '#3b3f52', '#4b5563', '#2f3e2f', '#312244',
                  '#8b94a6', '#1e293b'];
 
@@ -406,7 +406,7 @@ const AVATAR = (() => {
     const h   = nameH + subH;
     const top = bottomY - h;
 
-    ctx.fillStyle = 'rgba(11,42,85,.92)';
+    ctx.fillStyle = 'rgba(10,31,92,.92)';
     ISO.rrect(ctx, sx - w / 2, top, w, h, 7); ctx.fill();
     ctx.strokeStyle = ISO.rgba(color, .6); ctx.lineWidth = 1.2; ctx.stroke();
 

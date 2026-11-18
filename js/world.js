@@ -1,99 +1,72 @@
 /* ===========================================================
-   world.js — a planta do andar da Squad Pagar & Receber
-   Grade 48 x 34, um andar de prédio corporativo:
+   world.js — a planta do andar da Squad de Consórcio Pagar & Receber
+   Grade 60 x 34, um andar de prédio corporativo de banco:
 
      fileira de cima (fachada norte, janelas para a cidade)
-       Gerentes de Projeto · Tech Leaders · UX Design · Qualidade (QA)
+       Gerência · Produto · Tech Lead · Qualidade · Processos · Atendimento
      circulação central com recepção, elevadores e pilares
      fileira de baixo
-       Desenvolvimento (open space) · Sala de Reunião · Jogos
+       Desenvolvimento · SRE · Sala de Reunião · Cozinha · Jogos
 
    Divisórias internas são de vidro sobre parapeito; as paredes
    externas (norte e oeste) sobem inteiras e têm janelas.
    =========================================================== */
 const WORLD = (() => {
 
-  const W = 48, H = 34;
+  const W = 60, H = 34;
 
   const VOID = 0, FLOOR = 1, WALL = 2, DOOR = 3;
 
-  /* ---------- marca: azul e laranja ---------- */
+  /* ---------- marca: identidade visual Itaú (laranja e azul) ---------- */
   const BRAND = {
-    azul:    '#0A4DA2',
-    marinho: '#0B2A55',
-    claro:   '#3E8EDE',
-    laranja: '#FF7A1A',
-    pessego: '#FFB27A',
+    azul:    '#123C8C',
+    marinho: '#0A1F5C',
+    claro:   '#3F7FD6',
+    laranja: '#EC7000',
+    pessego: '#FFA14A',
     gelo:    '#F4F6F9'
   };
 
   /* ---------- paleta da arquitetura ---------- */
   const C = {
-    wall:    '#e6eaf0',
+    wall:    '#e9ecf1',
     wallTop: '#c4cedb',
     rodape:  '#b9c4d2',
     vidro:   '#a9c8ec',
     caixilho:'#8fa3bd'
   };
 
-  /* ---------- salas ---------- */
+  /* ---------- salas ----------
+     bx/by/bw/bh = caixa com as paredes; x1..x2 / y1..y2 = piso útil.   */
+  const sala = (id, name, short, bx, by, bw, bh, accent, floorA, floorB, desc) => ({
+    id, name, short, bx, by, bw, bh,
+    x1: bx + 1, y1: by + 1, x2: bx + bw - 2, y2: by + bh - 2,
+    accent, floorA, floorB, desc
+  });
+
   const ROOMS = {
-    gp: {
-      id: 'gp', name: 'GERENTES DE PROJETO', short: 'Gerentes de Projeto',
-      bx: 0, by: 0, bw: 12, bh: 14,
-      x1: 1, y1: 1, x2: 10, y2: 12,
-      accent: BRAND.azul,
-      floorA: '#eef1f5', floorB: '#e8ecf1',
-      desc: 'Roadmap do trimestre na parede, quadro de ideias e agenda de entregas. Daqui saem as prioridades da squad.'
-    },
-    tech: {
-      id: 'tech', name: 'TECH LEADERS', short: 'Tech Leaders',
-      bx: 11, by: 0, bw: 12, bh: 14,
-      x1: 12, y1: 1, x2: 21, y2: 12,
-      accent: BRAND.marinho,
-      floorA: '#edf0f5', floorB: '#e6eaf0',
-      desc: 'Arquitetura dos fluxos de pagamento e recebimento desenhada na parede. Revisão técnica e decisões de desenho.'
-    },
-    ux: {
-      id: 'ux', name: 'UX DESIGN', short: 'UX Design',
-      bx: 22, by: 0, bw: 12, bh: 14,
-      x1: 23, y1: 1, x2: 32, y2: 12,
-      accent: BRAND.laranja,
-      floorA: '#f3efe9', floorB: '#ede8e1',
-      desc: 'Moodboard, jornada do pagador e protótipos. Mesas com mesa digitalizadora.'
-    },
-    qa: {
-      id: 'qa', name: 'QUALIDADE · QA', short: 'Qualidade (QA)',
-      bx: 33, by: 0, bw: 15, bh: 14,
-      x1: 34, y1: 1, x2: 46, y2: 12,
-      accent: BRAND.claro,
-      floorA: '#edf1f4', floorB: '#e7ecf0',
-      desc: 'Pipeline de testes no painel, celulares de teste em cada mesa. Nada sobe sem passar por aqui.'
-    },
-    dev: {
-      id: 'dev', name: 'DESENVOLVIMENTO', short: 'Desenvolvimento',
-      bx: 0, by: 18, bw: 26, bh: 16,
-      x1: 1, y1: 19, x2: 24, y2: 32,
-      accent: BRAND.azul,
-      floorA: '#eef1f5', floorB: '#e8ecf1',
-      desc: 'Open space com 12 estações. Back-end, front-end e mobile dos fluxos de Pix, boleto e cartão.'
-    },
-    reuniao: {
-      id: 'reuniao', name: 'SALA DE REUNIÃO', short: 'Reunião',
-      bx: 25, by: 18, bw: 12, bh: 16,
-      x1: 26, y1: 19, x2: 35, y2: 32,
-      accent: BRAND.laranja,
-      floorA: '#e9e1d5', floorB: '#e3dacd',
-      desc: 'Mesa para oito, tela de apresentação. Dailies, refinamentos e a reunião dos agentes.'
-    },
-    lounge: {
-      id: 'lounge', name: 'JOGOS', short: 'Jogos',
-      bx: 36, by: 18, bw: 12, bh: 16,
-      x1: 37, y1: 19, x2: 46, y2: 32,
-      accent: BRAND.laranja,
-      floorA: '#f2e9de', floorB: '#ece2d6',
-      desc: 'Fliperama, sinuca, pebolim, puffs e café. Pausa de verdade, longe das mesas.'
-    },
+    ger: sala('ger', 'GERÊNCIA', 'Gerência', 0, 0, 11, 12, BRAND.laranja, '#f1ebe3', '#ece5dc',
+      'Sala do gerente da squad. Indicadores do consórcio na parede, mesa de reunião rápida e sofá.'),
+    produto: sala('produto', 'PRODUTO', 'Produto', 10, 0, 14, 12, BRAND.azul, '#eef1f5', '#e8ecf1',
+      'Gerentes de produto. Roadmap do trimestre e as próximas entregas na parede.'),
+    tech: sala('tech', 'TECH LEAD', 'Tech Lead', 23, 0, 10, 12, BRAND.marinho, '#edf0f5', '#e6eaf0',
+      'Arquitetura dos fluxos de pagar e receber do consórcio desenhada no quadro.'),
+    qa: sala('qa', 'QUALIDADE', 'Qualidade', 32, 0, 10, 12, BRAND.claro, '#edf1f4', '#e7ecf0',
+      'Pipeline de release no painel e celulares de teste na mesa. Nada sobe sem passar por aqui.'),
+    processos: sala('processos', 'PROCESSOS', 'Processos', 41, 0, 10, 12, BRAND.laranja, '#f3efe9', '#ede8e1',
+      'Mapeamento da jornada do consorciado, da adesão à contemplação, e melhoria contínua.'),
+    atendimento: sala('atendimento', 'ATENDIMENTO', 'Atendimento', 50, 0, 10, 12, BRAND.azul, '#eef1f5', '#e8ecf1',
+      'Fila de chamados, SLA e satisfação. A voz do cliente chega na squad por aqui.'),
+    dev: sala('dev', 'DESENVOLVIMENTO', 'Desenvolvimento', 0, 17, 20, 17, BRAND.azul, '#eef1f5', '#e8ecf1',
+      'Open space com 8 estações. Back-end, front-end e integrações de parcelas, lances e pagamento do bem.'),
+    sre: sala('sre', 'SRE', 'SRE', 19, 17, 10, 17, BRAND.marinho, '#e9edf3', '#e3e8ef',
+      'Painel de observabilidade, racks e plantão. Disponibilidade dos fluxos 24x7.'),
+    reuniao: sala('reuniao', 'SALA DE REUNIÃO', 'Reunião', 28, 17, 11, 17, BRAND.laranja, '#e9e1d5', '#e3dacd',
+      'Mesa para oito e tela de apresentação. Dailies, refinamentos e a reunião dos agentes.'),
+    cozinha: sala('cozinha', 'COZINHA', 'Cozinha', 38, 17, 10, 17, BRAND.laranja, '#f6f3ee', '#efebe4',
+      'Bancada com pia, cooktop, micro-ondas e café. Mesa para o lanche da tarde.'),
+    lounge: sala('lounge', 'JOGOS', 'Jogos', 47, 17, 13, 17, BRAND.laranja, '#f2e9de', '#ece2d6',
+      'Fliperama, sinuca, pebolim e puffs. Pausa de verdade, longe das mesas.'),
     corredor: {
       id: 'corredor', name: 'RECEPÇÃO & CIRCULAÇÃO', short: 'Recepção',
       accent: '#7d8aa0',
@@ -103,17 +76,23 @@ const WORLD = (() => {
   };
 
   /** salas de trabalho, na ordem em que aparecem no painel */
-  const WORK_ROOMS = ['gp', 'tech', 'ux', 'qa', 'dev'];
+  const WORK_ROOMS = ['ger', 'produto', 'tech', 'dev', 'qa', 'sre', 'atendimento', 'processos'];
+  /** salas de pausa: os bonecos em descanso circulam por elas */
+  const REST_ROOMS = ['lounge', 'cozinha'];
 
   /* ---------- portas (x, y, orientação, placa) ---------- */
   const DOORS = [
-    { x: 5,  y: 13, o: 'h' }, { x: 6,  y: 13, o: 'h', placa: 'gp'   },
-    { x: 16, y: 13, o: 'h' }, { x: 17, y: 13, o: 'h', placa: 'tech' },
-    { x: 27, y: 13, o: 'h' }, { x: 28, y: 13, o: 'h', placa: 'ux'   },
-    { x: 39, y: 13, o: 'h' }, { x: 40, y: 13, o: 'h', placa: 'qa'   },
-    { x: 12, y: 18, o: 'h' }, { x: 13, y: 18, o: 'h' },     // desenvolvimento
-    { x: 26, y: 18, o: 'h' }, { x: 27, y: 18, o: 'h' },     // reunião
-    { x: 41, y: 18, o: 'h' }, { x: 42, y: 18, o: 'h' }      // jogos
+    { x: 5,  y: 11, o: 'h' }, { x: 6,  y: 11, o: 'h', placa: 'ger'         },
+    { x: 16, y: 11, o: 'h' }, { x: 17, y: 11, o: 'h', placa: 'produto'     },
+    { x: 27, y: 11, o: 'h' }, { x: 28, y: 11, o: 'h', placa: 'tech'        },
+    { x: 36, y: 11, o: 'h' }, { x: 37, y: 11, o: 'h', placa: 'qa'          },
+    { x: 45, y: 11, o: 'h' }, { x: 46, y: 11, o: 'h', placa: 'processos'   },
+    { x: 54, y: 11, o: 'h' }, { x: 55, y: 11, o: 'h', placa: 'atendimento' },
+    { x: 9,  y: 17, o: 'h' }, { x: 10, y: 17, o: 'h', placa: 'dev'         },
+    { x: 26, y: 17, o: 'h' }, { x: 27, y: 17, o: 'h', placa: 'sre'         },
+    { x: 29, y: 17, o: 'h' }, { x: 30, y: 17, o: 'h', placa: 'reuniao'     },
+    { x: 45, y: 17, o: 'h' }, { x: 46, y: 17, o: 'h', placa: 'cozinha'     },
+    { x: 55, y: 17, o: 'h' }, { x: 56, y: 17, o: 'h', placa: 'lounge'      }
   ];
 
   /* ---------- grade ---------- */
@@ -177,21 +156,25 @@ const WORLD = (() => {
   /* ---------- o que vai pendurado nas paredes da fachada ---------- */
   const SIGNS = [
     // fachada norte
-    { o: 'n', x: 1,  y: 0, len: 3, kind: 'janela'      },
-    { o: 'n', x: 4,  y: 0, len: 6, kind: 'roadmap'     },
-    { o: 'n', x: 12, y: 0, len: 6, kind: 'arquitetura' },
-    { o: 'n', x: 18, y: 0, len: 3, kind: 'janela'      },
-    { o: 'n', x: 23, y: 0, len: 5, kind: 'moodboard'   },
-    { o: 'n', x: 28, y: 0, len: 4, kind: 'janela'      },
-    { o: 'n', x: 34, y: 0, len: 6, kind: 'pipeline'    },
-    { o: 'n', x: 40, y: 0, len: 6, kind: 'janela'      },
+    { o: 'n', x: 1,  y: 0, len: 4, kind: 'janela'       },
+    { o: 'n', x: 5,  y: 0, len: 5, kind: 'indicadores'  },
+    { o: 'n', x: 11, y: 0, len: 6, kind: 'roadmap'      },
+    { o: 'n', x: 17, y: 0, len: 6, kind: 'eventos'      },
+    { o: 'n', x: 24, y: 0, len: 6, kind: 'arquitetura'  },
+    { o: 'n', x: 30, y: 0, len: 2, kind: 'janela'       },
+    { o: 'n', x: 33, y: 0, len: 6, kind: 'pipeline'     },
+    { o: 'n', x: 39, y: 0, len: 2, kind: 'janela'       },
+    { o: 'n', x: 42, y: 0, len: 6, kind: 'processos'    },
+    { o: 'n', x: 48, y: 0, len: 2, kind: 'janela'       },
+    { o: 'n', x: 51, y: 0, len: 6, kind: 'atendimento'  },
+    { o: 'n', x: 57, y: 0, len: 2, kind: 'janela'       },
     // fachada oeste
     { o: 'w', x: 0, y: 1,  len: 5, kind: 'quadro'  },
-    { o: 'w', x: 0, y: 7,  len: 5, kind: 'eventos' },
-    { o: 'w', x: 0, y: 14, len: 4, kind: 'marca'   },
-    { o: 'w', x: 0, y: 19, len: 4, kind: 'janela'  },
-    { o: 'w', x: 0, y: 23, len: 6, kind: 'equipe'  },
-    { o: 'w', x: 0, y: 29, len: 4, kind: 'janela'  }
+    { o: 'w', x: 0, y: 6,  len: 5, kind: 'janela'  },
+    { o: 'w', x: 0, y: 12, len: 5, kind: 'marca'   },
+    { o: 'w', x: 0, y: 18, len: 4, kind: 'janela'  },
+    { o: 'w', x: 0, y: 22, len: 6, kind: 'equipe'  },
+    { o: 'w', x: 0, y: 28, len: 5, kind: 'janela'  }
   ];
 
   /* ===========================================================
@@ -215,27 +198,22 @@ const WORLD = (() => {
     ctx.restore();
   }
 
-  /* ---- logo da squad: duas setas, uma que paga e uma que recebe ---- */
+  /* ---- logo Itaú: quadrado laranja de cantos arredondados com
+         "itaú" em azul. Usado na recepção, na parede da marca e na TV. ---- */
   function logo(c, x, y, s) {
-    const g = c.createLinearGradient(x, y, x + s, y + s);
-    g.addColorStop(0, BRAND.azul); g.addColorStop(1, BRAND.marinho);
-    c.fillStyle = g;
-    ISO.rrect(c, x, y, s, s, s * .24); c.fill();
-    const u = s / 10;
-    // seta que sai (pagar), branca, para a direita
-    c.fillStyle = '#ffffff';
-    c.beginPath();
-    c.moveTo(x + 2.2 * u, y + 3.0 * u); c.lineTo(x + 6.0 * u, y + 3.0 * u);
-    c.lineTo(x + 6.0 * u, y + 1.9 * u); c.lineTo(x + 8.2 * u, y + 3.7 * u);
-    c.lineTo(x + 6.0 * u, y + 5.5 * u); c.lineTo(x + 6.0 * u, y + 4.4 * u);
-    c.lineTo(x + 2.2 * u, y + 4.4 * u); c.closePath(); c.fill();
-    // seta que entra (receber), laranja, para a esquerda
+    c.save();
     c.fillStyle = BRAND.laranja;
-    c.beginPath();
-    c.moveTo(x + 7.8 * u, y + 5.6 * u); c.lineTo(x + 4.0 * u, y + 5.6 * u);
-    c.lineTo(x + 4.0 * u, y + 4.5 * u); c.lineTo(x + 1.8 * u, y + 6.3 * u);
-    c.lineTo(x + 4.0 * u, y + 8.1 * u); c.lineTo(x + 4.0 * u, y + 7.0 * u);
-    c.lineTo(x + 7.8 * u, y + 7.0 * u); c.closePath(); c.fill();
+    ISO.rrect(c, x, y, s, s, s * .2); c.fill();
+    c.fillStyle = '#ffffff';
+    ISO.rrect(c, x + s * .07, y + s * .07, s * .86, s * .86, s * .15); c.fill();
+    c.fillStyle = BRAND.laranja;
+    ISO.rrect(c, x + s * .11, y + s * .11, s * .78, s * .78, s * .12); c.fill();
+    c.fillStyle = BRAND.marinho;
+    c.textAlign = 'center'; c.textBaseline = 'alphabetic';
+    c.font = `700 ${s * .38}px 'Barlow', sans-serif`;
+    c.letterSpacing = '0px';
+    c.fillText('itaú', x + s / 2, y + s * .64);
+    c.restore();
   }
 
   /* ---- chão + laje do prédio ----
@@ -255,7 +233,7 @@ const WORLD = (() => {
 
     // laje de concreto: o andar flutua como o corte de um prédio
     ISO.box(c, 0, 0, W, H, LAJE, -LAJE, '#c9d1dc',
-            { left: '#b6c0cd', right: '#9eaabb', top: '#d5dbe3', line: 'rgba(11,42,85,.12)' });
+            { left: '#b6c0cd', right: '#9eaabb', top: '#d5dbe3', line: 'rgba(10,31,92,.12)' });
     // faixa laranja na borda da laje (a marca, discreta)
     ISO.quad(c, [ISO.toScreen(0, H, -3), ISO.toScreen(W, H, -3),
                  ISO.toScreen(W, H, -7), ISO.toScreen(0, H, -7)], BRAND.laranja);
@@ -269,12 +247,12 @@ const WORLD = (() => {
         const r = ROOMS[roomOf[idx(x, y)]] || ROOMS.corredor;
         let col = ((x + y) & 1) ? r.floorA : r.floorB;
         if (k === DOOR) col = ISO.shade(r.accent, .82);
-        ISO.tile(c, x, y, col, 'rgba(11,42,85,.045)');
+        ISO.tile(c, x, y, col, 'rgba(10,31,92,.045)');
       }
     }
     // linha de orientação no piso da circulação (laranja, fina)
-    ISO.plane(c, 1.2, 15.45, 44.6, .1, 0.4, ISO.rgba(BRAND.laranja, .55));
-    ISO.plane(c, 1.2, 15.65, 44.6, .04, 0.4, ISO.rgba(BRAND.azul, .35));
+    ISO.plane(c, 1.2, 14.45, W - 4.4, .1, 0.4, ISO.rgba(BRAND.laranja, .55));
+    ISO.plane(c, 1.2, 14.65, W - 4.4, .04, 0.4, ISO.rgba(BRAND.azul, .35));
     pisoCache = { cv, x: x0, y: y0 };
   }
 
@@ -308,13 +286,11 @@ const WORLD = (() => {
       ctx.fillText(r.name, p.x, p.y);
       ctx.restore();
     };
-    put(ROOMS.gp, 6, 12.2);
-    put(ROOMS.tech, 17, 12.2);
-    put(ROOMS.ux, 28, 12.2);
-    put(ROOMS.qa, 40.5, 12.2);
-    put(ROOMS.dev, 13, 32.3);
-    put(ROOMS.reuniao, 31, 32.3);
-    put(ROOMS.lounge, 42, 32.3);
+    // nome pintado junto à divisória da frente de cada sala
+    for (const r of Object.values(ROOMS)) {
+      if (r.bw === undefined) continue;
+      put(r, (r.x1 + r.x2 + 1) / 2, r.y2 + 0.25);
+    }
   }
 
   const cacheGrad = new Map();
@@ -462,6 +438,9 @@ const WORLD = (() => {
       case 'equipe':      return signEquipe(c, len, t);
       case 'eventos':     return signEventos(c, len);
       case 'quadro':      return signQuadro(c, len);
+      case 'indicadores': return signIndicadores(c, len, t);
+      case 'processos':   return signProcessos(c, len);
+      case 'atendimento': return signAtendimento(c, len, t);
     }
     void rgbOn;
   }
@@ -477,7 +456,7 @@ const WORLD = (() => {
     }
     // janela, marca e quadros quase não mudam: repinta devagar
     const parada = (s.kind === 'janela' || s.kind === 'marca' || s.kind === 'arquitetura' ||
-                    s.kind === 'moodboard' || s.kind === 'roadmap');
+                    s.kind === 'moodboard' || s.kind === 'roadmap' || s.kind === 'processos');
     const passo = parada ? 30 : 0.25;
     if (t - c.t > passo || c.t > t || c.rgb !== rgbOn) {
       c.t = t; c.rgb = rgbOn;
@@ -498,7 +477,7 @@ const WORLD = (() => {
   const FT = (peso, tam, fam) => `${peso} ${tam}px '${fam || 'Barlow Semi Condensed'}', sans-serif`;
 
   function painelBranco(c, x0, y0, w, h) {
-    c.fillStyle = 'rgba(11,42,85,.10)';
+    c.fillStyle = 'rgba(10,31,92,.10)';
     ISO.rrect(c, x0 + 2, y0 + 3, w, h, 5); c.fill();
     c.fillStyle = '#ffffff';
     ISO.rrect(c, x0, y0, w, h, 5); c.fill();
@@ -516,7 +495,7 @@ const WORLD = (() => {
   function ceuAgora() {
     const h = new Date().getHours() + new Date().getMinutes() / 60;
     if (h >= 7 && h < 16.5)  return { top: '#7fb6ea', bot: '#d6e9fa', noite: false, pred: '#9fb3c9', pred2: '#b7c7d8' };
-    if (h >= 16.5 && h < 19) return { top: '#3c5f9e', bot: '#ffb27a', noite: false, pred: '#4a5a78', pred2: '#6a7792' };
+    if (h >= 16.5 && h < 19) return { top: '#3c5f9e', bot: '#FFA14A', noite: false, pred: '#4a5a78', pred2: '#6a7792' };
     if (h >= 5.5 && h < 7)   return { top: '#5a7bb5', bot: '#ffd3a8', noite: false, pred: '#56688a', pred2: '#7383a0' };
     return { top: '#08152e', bot: '#1b3460', noite: true, pred: '#0f1d38', pred2: '#16284a' };
   }
@@ -573,31 +552,133 @@ const WORLD = (() => {
     c.fillRect(x0 - 5, y0 + h + 2, w + 10, 4);
   }
 
-  /* ---------- a marca da squad, na parede da recepção ---------- */
+  /* ---------- a marca, na parede da recepção ---------- */
   function signMarca(c, len) {
-    const x0 = 6, y0 = 14, w = len - 12, h = 78;
-    c.fillStyle = BRAND.marinho;
+    const x0 = 6, y0 = 12, w = len - 12, h = 82;
+    c.fillStyle = '#ffffff';
     ISO.rrect(c, x0, y0, w, h, 6); c.fill();
+    c.strokeStyle = '#d3dae4'; c.lineWidth = 1; c.stroke();
     // filete laranja embaixo
     c.fillStyle = BRAND.laranja;
     c.fillRect(x0, y0 + h - 5, w, 5);
-    logo(c, x0 + 14, y0 + 14, 44);
+    logo(c, x0 + 14, y0 + 14, 52);
+    // "Squad de Consórcio Pagar & Receber" → "SQUAD DE CONSÓRCIO" + "PAGAR & RECEBER"
+    const E = window.ESCRITORIO || {};
+    const nome = String(E.nome || 'Squad de Consórcio Pagar & Receber');
+    const m = nome.match(/^(squad(?:\s+de)?\s+\S+)\s+(.+)$/i);
+    const linha1 = (m ? m[1] : 'Squad').toUpperCase();
+    const linha2 = (m ? m[2] : nome).toUpperCase();
+    const tx = x0 + 80, larg = w - 92;
     c.textAlign = 'left'; c.textBaseline = 'middle';
     c.font = FT(600, 9); c.letterSpacing = '3px';
-    c.fillStyle = BRAND.pessego;
-    c.fillText('SQUAD', x0 + 70, y0 + 22);
+    c.fillStyle = BRAND.laranja;
+    c.fillText(linha1, tx, y0 + 22);
     c.letterSpacing = '0px';
-    const E = window.ESCRITORIO || {};
-    const nome = String(E.nome || 'Squad Pagar & Receber').replace(/^squad\s+/i, '').toUpperCase();
-    let tam = 19;
+    let tam = 21;
     c.font = FT(700, tam, 'Barlow');
-    while (tam > 10 && c.measureText(nome).width > w - 82) { tam--; c.font = FT(700, tam, 'Barlow'); }
-    c.fillStyle = '#ffffff';
-    c.fillText(nome, x0 + 70, y0 + 40);
+    while (tam > 10 && c.measureText(linha2).width > larg) { tam--; c.font = FT(700, tam, 'Barlow'); }
+    c.fillStyle = BRAND.marinho;
+    c.fillText(linha2, tx, y0 + 42);
     c.font = FT(500, 8.5); c.letterSpacing = '1.5px';
-    c.fillStyle = 'rgba(214,226,245,.75)';
-    c.fillText(String(E.subtitulo || 'Tecnologia · Meios de Pagamento').toUpperCase().slice(0, 34), x0 + 70, y0 + 57);
+    c.fillStyle = '#66748a';
+    c.fillText(String(E.subtitulo || 'Tecnologia · Consórcio').toUpperCase().slice(0, 34), tx, y0 + 61);
     c.letterSpacing = '0px';
+  }
+
+  /* ---------- Gerência: indicadores do consórcio ---------- */
+  function signIndicadores(c, len, t) {
+    const x0 = 8, y0 = 12, w = len - 16, h = 84;
+    c.fillStyle = BRAND.marinho;
+    ISO.rrect(c, x0, y0, w, h, 6); c.fill();
+    c.fillStyle = BRAND.laranja; c.fillRect(x0, y0 + h - 4, w, 4);
+    tituloPlaca(c, x0 + 12, y0 + 13, 'CONSÓRCIO · MÊS', '#ffffff');
+    const kpis = [
+      ['COTAS ATIVAS', '48,2 mil', .78],
+      ['RECEBIDO', 'R$ 312 mi', .91],
+      ['CONTEMPLADAS', '1.240', .64],
+      ['INADIMPLÊNCIA', '2,1%', .21]
+    ];
+    const cw = (w - 24) / 2;
+    kpis.forEach((k, i) => {
+      const kx = x0 + 12 + (i % 2) * cw, ky = y0 + 32 + Math.floor(i / 2) * 26;
+      c.textAlign = 'left';
+      c.font = FT(600, 7); c.fillStyle = 'rgba(214,226,245,.7)';
+      c.fillText(k[0], kx, ky);
+      c.font = FT(700, 12, 'Barlow'); c.fillStyle = i === 3 ? BRAND.pessego : '#ffffff';
+      c.fillText(k[1], kx, ky + 12);
+      const bw = cw - 20, amp = k[2] * (.96 + .04 * Math.sin(t * .4 + i));
+      c.fillStyle = 'rgba(255,255,255,.14)'; c.fillRect(kx + 64, ky + 10, bw - 64, 3);
+      c.fillStyle = i === 3 ? BRAND.laranja : BRAND.claro; c.fillRect(kx + 64, ky + 10, (bw - 64) * amp, 3);
+    });
+  }
+
+  /* ---------- Processos: jornada do consorciado ---------- */
+  function signProcessos(c, len) {
+    const x0 = 8, y0 = 10, w = len - 16, h = 88;
+    c.fillStyle = '#aab6c6'; ISO.rrect(c, x0 - 3, y0 - 3, w + 6, h + 6, 4); c.fill();
+    c.fillStyle = '#fbfcfd'; ISO.rrect(c, x0, y0, w, h, 3); c.fill();
+    tituloPlaca(c, x0 + 10, y0 + 11, 'JORNADA DO CONSORCIADO', BRAND.marinho);
+    const etapas = ['ADESÃO', 'PARCELAS', 'ASSEMBLEIA', 'LANCE', 'CONTEMPLA', 'PAGA O BEM'];
+    const ew = (w - 16) / etapas.length;
+    etapas.forEach((e, i) => {
+      const ex = x0 + 8 + i * ew, ey = y0 + 30;
+      const cor = i % 2 ? BRAND.laranja : BRAND.azul;
+      c.fillStyle = ISO.rgba(cor, .1); c.strokeStyle = cor; c.lineWidth = 1.4;
+      ISO.rrect(c, ex + 2, ey, ew - 10, 18, 9); c.fill(); c.stroke();
+      c.fillStyle = cor; c.font = FT(700, 7); c.textAlign = 'center'; c.textBaseline = 'middle';
+      c.fillText(e, ex + ew / 2 - 3, ey + 9.5);
+      if (i < etapas.length - 1) {
+        c.strokeStyle = '#8a97ab'; c.lineWidth = 1;
+        c.beginPath(); c.moveTo(ex + ew - 8, ey + 9); c.lineTo(ex + ew + 2, ey + 9); c.stroke();
+      }
+    });
+    // kanban de melhorias
+    const cols = [['A FAZER', 3], ['FAZENDO', 2], ['FEITO', 4]];
+    const kw = (w - 20) / 3;
+    cols.forEach((col, i) => {
+      const kx = x0 + 10 + i * kw, ky = y0 + 58;
+      c.textAlign = 'left'; c.font = FT(700, 7); c.fillStyle = '#8a97ab';
+      c.fillText(col[0], kx, ky);
+      for (let j = 0; j < col[1]; j++) {
+        c.fillStyle = ['#ffe58a', '#ffd0a6', '#bfe0ff'][i];
+        c.fillRect(kx + j * 17, ky + 7, 14, 12);
+      }
+    });
+  }
+
+  /* ---------- Atendimento: fila de chamados ---------- */
+  function signAtendimento(c, len, t) {
+    const x0 = 8, y0 = 12, w = len - 16, h = 84;
+    painelBranco(c, x0, y0, w, h);
+    c.fillStyle = BRAND.laranja; c.fillRect(x0, y0, 4, h);
+    tituloPlaca(c, x0 + 14, y0 + 13, 'ATENDIMENTO · HOJE');
+    c.textAlign = 'right'; c.font = FT(600, 8); c.fillStyle = '#3ccf8e';
+    c.fillText('● ao vivo', x0 + w - 12, y0 + 13);
+    c.strokeStyle = '#e3e8ef';
+    c.beginPath(); c.moveTo(x0 + 12, y0 + 23); c.lineTo(x0 + w - 12, y0 + 23); c.stroke();
+    const fila = 6 + Math.floor((Math.sin(t * .15) + 1) * 3);
+    const cels = [
+      ['NA FILA', String(fila), BRAND.laranja],
+      ['SLA', '96%', BRAND.azul],
+      ['CSAT', '4,7', BRAND.marinho]
+    ];
+    const cw = (w - 28) / 3;
+    cels.forEach((k, i) => {
+      const kx = x0 + 14 + i * cw;
+      c.textAlign = 'left'; c.font = FT(600, 8); c.fillStyle = '#8a97ab';
+      c.fillText(k[0], kx, y0 + 36);
+      c.font = FT(700, 20, 'Barlow'); c.fillStyle = k[2];
+      c.fillText(k[1], kx, y0 + 55);
+    });
+    // canais
+    const canais = [['app', .55, BRAND.azul], ['chat', .3, BRAND.laranja], ['fone', .15, BRAND.claro]];
+    let ax = x0 + 14; const tw = w - 28;
+    canais.forEach(k => {
+      c.fillStyle = k[2]; c.fillRect(ax, y0 + 68, tw * k[1] - 2, 5);
+      c.font = FT(600, 7); c.fillStyle = '#66748a'; c.textAlign = 'left';
+      c.fillText(k[0].toUpperCase(), ax, y0 + 79);
+      ax += tw * k[1];
+    });
   }
 
   /* ---------- GP: roadmap do trimestre ---------- */
@@ -612,11 +693,11 @@ const WORLD = (() => {
     c.strokeStyle = '#e3e8ef'; c.lineWidth = 1;
     for (let i = 1; i < 3; i++) { c.beginPath(); c.moveTo(gx + gw * i / 3, y0 + 20); c.lineTo(gx + gw * i / 3, y0 + h - 6); c.stroke(); }
     const itens = [
-      ['Pix Automático',      .00, .55, BRAND.azul],
-      ['Boleto + QR Code',    .20, .70, BRAND.laranja],
-      ['Conciliação D+0',     .45, .95, BRAND.claro],
-      ['Agenda de pagamentos',.60, 1.0, BRAND.marinho],
-      ['Antifraude no fluxo', .10, .40, BRAND.pessego]
+      ['Parcela no Pix',      .00, .55, BRAND.azul],
+      ['Boleto da parcela',   .20, .70, BRAND.laranja],
+      ['Lance pelo app',      .45, .95, BRAND.claro],
+      ['Pagamento do bem',    .60, 1.0, BRAND.marinho],
+      ['Conciliação de cotas',.10, .40, BRAND.pessego]
     ];
     itens.forEach((it, i) => {
       const ry = y0 + 28 + i * 11.5;
@@ -652,9 +733,9 @@ const WORLD = (() => {
     };
     const col = w / 4;
     caixa(x0 + 8, y0 + 46, col - 14, 'API GATEWAY', BRAND.marinho);
-    caixa(x0 + col + 6, y0 + 26, col - 6, 'PAGAMENTOS', BRAND.azul);
-    caixa(x0 + col + 6, y0 + 64, col - 6, 'RECEBIMENTOS', BRAND.laranja);
-    caixa(x0 + col * 2 + 12, y0 + 46, col - 14, 'LEDGER', BRAND.marinho);
+    caixa(x0 + col + 6, y0 + 26, col - 6, 'PAGAR', BRAND.azul);
+    caixa(x0 + col + 6, y0 + 64, col - 6, 'RECEBER', BRAND.laranja);
+    caixa(x0 + col * 2 + 12, y0 + 46, col - 14, 'COTAS', BRAND.marinho);
     caixa(x0 + col * 3 + 6, y0 + 26, col - 14, 'PIX / SPI', BRAND.claro);
     caixa(x0 + col * 3 + 6, y0 + 64, col - 14, 'BOLETO / CIP', BRAND.claro);
     seta(x0 + col - 6, y0 + 52, x0 + col + 6, y0 + 36, BRAND.marinho);
@@ -831,11 +912,11 @@ const WORLD = (() => {
   function drawDecals() { /* piso liso */ }
 
   /* ---------- pontos de interesse ---------- */
-  const SPAWN = { x: 45, y: 16 };          // saída dos elevadores
+  const SPAWN = { x: 57.5, y: 14 };        // saída dos elevadores
 
   return {
     W, H, VOID, FLOOR, WALL, DOOR, C, BRAND,
-    ROOMS, WORK_ROOMS, DOORS, SPAWN, WALL_H, PARAPET,
+    ROOMS, WORK_ROOMS, REST_ROOMS, DOORS, SPAWN, WALL_H, PARAPET,
     SIGNS, signDepth, logo,
     kindAt, roomAt, isWall, walkable, setBlocked, wallOccludes,
     drawFloor, drawWallTile, drawDoorTile, drawSigns, drawDecals, drawRoomLabels,

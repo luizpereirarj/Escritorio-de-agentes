@@ -1,25 +1,28 @@
 /* ===========================================================
    roster.js — quem trabalha aqui.
-   BOSSES  : você (sempre em serviço, na Diretoria)
-   CATALOG : o agente de exemplo + vagas sugeridas para começar
+   BOSSES  : o gerente da squad (sempre em serviço, na Gerência)
+   CATALOG : a Squad de Consórcio Pagar & Receber + o agente de exemplo
    =========================================================== */
 const ROSTER = (() => {
 
-  const KEY = 'squad-pagar-receber-v1';
+  const KEY = 'squad-consorcio-pr-v2';
+  /** versão da planta. Equipe salva numa planta anterior é trocada pela
+      squad padrão: as mesas da planta antiga não existem mais. */
+  const PLANTA = 2;
 
   /* ===========================================================
-     A LIDERANÇA — o nome vem de data/config.json ("dono")
+     A LIDERANÇA
      =========================================================== */
   const BOSSES = [
     {
-      id: 'boss-1', name: (window.ESCRITORIO && ESCRITORIO.dono) || 'Você', role: 'Head da Squad Pagar & Receber',
-      emoji: '⭐', boss: true, dept: 'gp', slotId: 'GP-1',
+      id: 'boss-1', name: 'Marcelo Bordotti', role: 'Gerente da Squad de Consórcio Pagar & Receber',
+      emoji: '⭐', boss: true, dept: 'ger', slotId: 'GER-1',
       status: 'trabalhando', locked: true,
       source: 'Liderança', sistema: null,
-      brief: 'Responde pela squad. Fica na sala dos Gerentes de Projeto, sempre em serviço.',
+      brief: 'Gerente da squad. Fica na sala da Gerência, sempre em serviço.',
       look: {
-        skin: '#d9a17a', hair: '#2a1d14', style: 'curto',
-        shirt: '#0B2A55', pants: '#1e293b', shoes: '#15181f',
+        skin: '#e0a878', hair: '#2a1d14', style: 'curto',
+        shirt: '#0A1F5C', pants: '#1e293b', shoes: '#15181f',
         glasses: null, beard: null, tattoo: false, cap: false,
         uniforme: false
       }
@@ -27,126 +30,82 @@ const ROSTER = (() => {
   ];
 
   /* ===========================================================
-     BANCO DE TALENTOS DA SQUAD
-     sala: gp | tech | ux | qa | dev — define a sala da estação
+     A SQUAD
+     sala: ger | produto | tech | dev | qa | sre | atendimento | processos
      'detectado' = tem sistema no registro (data/sistemas.json)
-     'sugerido'  = vaga da squad; contrate e depois ligue um sistema a ela
+     'sugerido'  = pessoa da squad; ligue um sistema a ela quando quiser
+     A aparência de cada um é sorteada a partir do nome e pode ser
+     trocada na ficha (botão do Visual).
      =========================================================== */
-  const AZ = '#0A4DA2', MA = '#0B2A55', LA = '#FF7A1A', CL = '#3E8EDE', BR = '#e9edf2', CI = '#64748b';
+  const AZ = '#123C8C', MA = '#0A1F5C', LA = '#EC7000', CL = '#3F7FD6', BR = '#e9edf2', CI = '#64748b';
+  const pessoa = (key, name, role, emoji, sala, shirt, desc, why) =>
+    ({ key, name, role, emoji, sala, cat: 'sugerido', desc, why,
+       look: { shirt, tattoo: false, cap: false } });
+
   const CATALOG = [
+    /* ---- Produto ---- */
+    pessoa('pm-filipe', 'Filipe Coelho', 'Gerente de Produto', '📋', 'produto', AZ,
+      'Cuida da visão de produto dos fluxos de pagar e receber do consórcio e prioriza o backlog.',
+      'Liga o que o cliente precisa ao que a squad entrega.'),
+    pessoa('pm-raphaela', 'Raphaela', 'Gerente de Produto', '📆', 'produto', LA,
+      'Conduz discovery e roadmap das jornadas de recebimento: parcelas, lances e boletos.',
+      'Garante que cada entrega resolva uma dor real do consorciado.'),
+    pessoa('pm-luane', 'Luane', 'Gerente de Produto', '🎯', 'produto', CL,
+      'Acompanha indicadores e entregas das jornadas de pagamento: crédito, bem e devoluções.',
+      'Mede o resultado do que foi para produção.'),
+
+    /* ---- Tech Lead ---- */
+    pessoa('tl-matheus', 'Matheus Oliveira', 'Tech Lead', '🧭', 'tech', MA,
+      'Responde pela arquitetura, pelos padrões de código e pelas decisões técnicas da squad.',
+      'Decisão técnica errada em pagamento vira incidente. Revisão de desenho evita isso.'),
+
+    /* ---- Desenvolvimento ---- */
+    pessoa('dev-emesron', 'Emesron Bilieri', 'Engenharia de Software', '⚡', 'dev', AZ,
+      'Desenvolve as APIs de recebimento de parcelas e lances.', 'Back-end dos fluxos de receber.'),
+    pessoa('dev-edison', 'Edison Maciel', 'Engenharia de Software', '🧾', 'dev', BR,
+      'Integrações de boleto e Pix com as plataformas do banco.', 'Integração é onde o dinheiro entra.'),
+    pessoa('dev-bruno-c', 'Bruno Cavalcanti', 'Engenharia de Software', '🖥️', 'dev', MA,
+      'Telas e jornadas de pagar e receber no app e no internet banking.', 'Transforma o fluxo em tela simples.'),
+    pessoa('dev-luiz', 'Luiz Pereira', 'Engenharia de Software', '🛠️', 'dev', LA,
+      'Fluxos de pagamento do bem e devoluções aos consorciados.', 'Back-end dos fluxos de pagar.'),
+    pessoa('dev-thiago', 'Thiago Pereira', 'Engenharia de Software', '🧮', 'dev', CL,
+      'Conciliação de cotas e os dados de volume, falha e liquidação.', 'Sem conciliação ninguém sabe se o dinheiro chegou.'),
+    pessoa('dev-jose', 'Jose Ergildo', 'Engenharia de Software', '🔌', 'dev', CI,
+      'Mensageria, jobs de lote e integração com os sistemas legados do consórcio.', 'Mantém o lote noturno rodando.'),
+
+    /* ---- Qualidade ---- */
+    pessoa('qa-bianca', 'Bianca Mancuso', 'Qualidade (QA)', '🧪', 'qa', CL,
+      'Estratégia de testes, automação e validação de cada entrega antes da produção.',
+      'Regra de consórcio tem muita exceção. Teste bem feito pega o que o código esqueceu.'),
+
+    /* ---- SRE ---- */
+    pessoa('sre-natalia', 'Natalia Galdino', 'SRE', '🛰️', 'sre', MA,
+      'Observabilidade, SLOs e alertas dos serviços da squad.', 'Pagamento é 24x7: alguém cuida de disponibilidade.'),
+    pessoa('sre-bruno-r', 'Bruno Roberto', 'SRE', '📡', 'sre', AZ,
+      'Pipelines de deploy, infraestrutura e plantão.', 'Deploy seguro e rollback rápido.'),
+
+    /* ---- Atendimento ---- */
+    pessoa('at-nathalia', 'Nathalia Chaves', 'Atendimento', '🎧', 'atendimento', LA,
+      'Recebe os chamados de clientes e áreas parceiras e acompanha até a solução.',
+      'É a voz do consorciado dentro da squad.'),
+
+    /* ---- Processos ---- */
+    pessoa('pr-gabriel', 'Gabriel Simplicio', 'Processos', '🗂️', 'processos', BR,
+      'Mapeia e melhora os processos da jornada do consorciado, da adesão à contemplação.',
+      'Processo claro reduz retrabalho e chamado.'),
+
+    /* ---- Agente de demonstração ---- */
     {
       key: 'exemplo', name: 'EXEMPLO', role: 'Agente de demonstração', emoji: '🤖', sala: 'dev',
       cat: 'detectado', system: 'Agente de exemplo', sistema: 'exemplo',
       desc: 'Um sistema mínimo que vem junto, na pasta exemplo-agente: sobe na porta 4401 e mostra uma página.',
-      why: 'Serve de molde. Clique no computador dele para ver o escritório ligar, embutir e conversar com um sistema. Depois cadastre os seus.',
-      look: { skin: '#c9854f', hair: '#140f0c', style: 'cacheado', shirt: CL, pants: '#26304a', glasses: null, beard: null }
-    },
-
-    /* ---- Gerentes de Projeto ---- */
-    {
-      key: 'gp-marina', name: 'Marina', role: 'Gerente de Projeto · Pagamentos', emoji: '📋', sala: 'gp', cat: 'sugerido',
-      desc: 'Conduz o roadmap de Pix, TED e agendamentos. Cuida de prazo, risco e dependência entre times.',
-      why: 'Fluxo de pagamento mexe com regulatório e com outros times do banco: alguém precisa costurar tudo.',
-      look: { skin: '#f0c29b', hair: '#3d2a1a', style: 'longo', shirt: AZ, pants: '#1e293b', glasses: 'retangular', beard: null }
-    },
-    {
-      key: 'gp-paulo', name: 'Paulo', role: 'Gerente de Projeto · Recebimentos', emoji: '📆', sala: 'gp', cat: 'sugerido',
-      desc: 'Toca boleto, cobrança e conciliação. Prioriza com o negócio e acompanha os indicadores.',
-      why: 'Recebimento é caixa do cliente: cada atraso de entrega aparece no resultado.',
-      look: { skin: '#a2643b', hair: '#140f0c', style: 'fade', shirt: BR, pants: '#26304a', glasses: null, beard: 'cavanhaque' }
-    },
-
-    /* ---- Tech Leaders ---- */
-    {
-      key: 'tl-rodrigo', name: 'Rodrigo', role: 'Tech Lead · Pagamentos', emoji: '🧭', sala: 'tech', cat: 'sugerido',
-      desc: 'Desenha a arquitetura dos fluxos de saída: Pix, TED e integração com o SPI.',
-      why: 'Decisão técnica errada em pagamento vira incidente. Revisão de desenho evita isso.',
-      look: { skin: '#e0a878', hair: '#241a13', style: 'curto', shirt: MA, pants: '#1b2030', glasses: 'retangular', beard: 'cheia' }
-    },
-    {
-      key: 'tl-aline', name: 'Aline', role: 'Tech Lead · Recebimentos', emoji: '🛠️', sala: 'tech', cat: 'sugerido',
-      desc: 'Responde pela plataforma de boleto, QR Code e pelo ledger de recebimentos.',
-      why: 'Garante padrão de código, observabilidade e resiliência nos fluxos de entrada.',
-      look: { skin: '#7a4a2c', hair: '#140f0c', style: 'coque', shirt: CL, pants: '#1e293b', glasses: null, beard: null }
-    },
-
-    /* ---- UX ---- */
-    {
-      key: 'ux-bruna', name: 'Bruna', role: 'UX Designer', emoji: '🎨', sala: 'ux', cat: 'sugerido',
-      desc: 'Desenha a jornada do pagador no app e no internet banking, do protótipo ao teste com usuário.',
-      why: 'Pagar e receber precisa ser em poucos toques e sem dúvida: é aqui que se perde ou ganha o cliente.',
-      look: { skin: '#f7d7bd', hair: '#a8702f', style: 'chanel', shirt: LA, pants: '#26304a', glasses: 'redondo', beard: null }
-    },
-    {
-      key: 'ux-caio', name: 'Caio', role: 'UX Writer & Pesquisa', emoji: '🔎', sala: 'ux', cat: 'sugerido',
-      desc: 'Escreve os textos das telas e roda as pesquisas com clientes.',
-      why: 'Texto claro em tela de pagamento evita erro, reclamação e chamado no atendimento.',
-      look: { skin: '#c9854f', hair: '#3d2a1a', style: 'ondulado', shirt: BR, pants: '#1b2030', glasses: null, beard: null }
-    },
-
-    /* ---- QA ---- */
-    {
-      key: 'qa-dan', name: 'Dan', role: 'Analista de Qualidade · Automação', emoji: '🧪', sala: 'qa', cat: 'sugerido',
-      desc: 'Mantém a suíte automatizada: unitários, contrato e ponta a ponta.',
-      why: 'Com várias pessoas mexendo em código de pagamento, alguém precisa ser o freio antes da produção.',
-      look: { skin: '#f7d7bd', hair: '#8e8e93', style: 'curto', shirt: CL, pants: '#26304a', glasses: 'redondo', beard: null }
-    },
-    {
-      key: 'qa-livia', name: 'Lívia', role: 'Analista de Qualidade · Funcional', emoji: '✅', sala: 'qa', cat: 'sugerido',
-      desc: 'Escreve os cenários de teste a partir das regras do negócio e valida cada entrega.',
-      why: 'Regra de pagamento tem muita exceção. Cenário bem escrito pega o que o código esqueceu.',
-      look: { skin: '#e0a878', hair: '#140f0c', style: 'rabo', shirt: AZ, pants: '#1e293b', glasses: null, beard: null }
-    },
-    {
-      key: 'qa-otavio', name: 'Otávio', role: 'Analista de Qualidade · Performance', emoji: '📈', sala: 'qa', cat: 'sugerido',
-      desc: 'Testa carga e estresse nos picos: dia 5, dia 10 e Black Friday.',
-      why: 'Pagamento cai justo no dia de pico. Teste de carga antes evita o incidente depois.',
-      look: { skin: '#5a3620', hair: '#140f0c', style: 'raspado', shirt: MA, pants: '#26304a', glasses: null, beard: 'cheia' }
-    },
-
-    /* ---- Desenvolvimento ---- */
-    {
-      key: 'dev-leo', name: 'Léo', role: 'Dev Back-end · Pix', emoji: '⚡', sala: 'dev', cat: 'sugerido',
-      desc: 'APIs de Pix: envio, devolução, agendamento e Pix Automático.',
-      why: 'Pix é o fluxo de maior volume: precisa de gente dedicada.',
-      look: { skin: '#f0c29b', hair: '#241a13', style: 'fade', shirt: AZ, pants: '#1b2030', glasses: null, beard: 'cavanhaque' }
-    },
-    {
-      key: 'dev-rafa', name: 'Rafa', role: 'Dev Back-end · Boleto', emoji: '🧾', sala: 'dev', cat: 'sugerido',
-      desc: 'Registro, baixa e liquidação de boletos, integração com a CIP.',
-      why: 'Boleto ainda é o meio de recebimento de muita empresa cliente do banco.',
-      look: { skin: '#c9854f', hair: '#1a120d', style: 'curto', shirt: BR, pants: '#26304a', glasses: 'retangular', beard: 'cheia' }
-    },
-    {
-      key: 'dev-bia', name: 'Bia', role: 'Dev Front-end', emoji: '🖥️', sala: 'dev', cat: 'sugerido',
-      desc: 'Telas de pagamento e recebimento no internet banking.',
-      why: 'Transforma o protótipo do UX em tela rápida e acessível.',
-      look: { skin: '#7a4a2c', hair: '#140f0c', style: 'afro', shirt: LA, pants: '#1b2030', glasses: 'redondo', beard: null }
-    },
-    {
-      key: 'dev-nico', name: 'Nico', role: 'Dev Mobile', emoji: '📱', sala: 'dev', cat: 'sugerido',
-      desc: 'Fluxos de pagar e receber no app do banco, iOS e Android.',
-      why: 'A maior parte das transações nasce no celular.',
-      look: { skin: '#e0a878', hair: '#5a3a22', style: 'longo', shirt: MA, pants: '#26304a', glasses: null, beard: null }
-    },
-    {
-      key: 'dev-cami', name: 'Cami', role: 'Dev de Dados · Conciliação', emoji: '🧮', sala: 'dev', cat: 'sugerido',
-      desc: 'Conciliação D+0 e os painéis de volume, falha e tempo de liquidação.',
-      why: 'Sem conciliação confiável, ninguém sabe se o dinheiro chegou.',
-      look: { skin: '#f0c29b', hair: '#140f0c', style: 'longo', shirt: CL, pants: '#1b2030', glasses: 'redondo', beard: null }
-    },
-    {
-      key: 'dev-duda', name: 'Duda', role: 'SRE · Plataforma', emoji: '🛰️', sala: 'dev', cat: 'sugerido',
-      desc: 'Deploy, observabilidade e plantão dos serviços da squad.',
-      why: 'Pagamento é 24x7: alguém precisa cuidar de disponibilidade e alerta.',
-      look: { skin: '#f7d7bd', hair: '#8b5a2b', style: 'franja', shirt: CI, pants: '#1e293b', glasses: 'retangular', beard: null }
+      why: 'Serve de molde. Contrate e clique no computador dele para ver o escritório ligar, embutir e conversar com um sistema.',
+      look: { shirt: CL, tattoo: false, cap: false }
     }
   ];
 
   /** quem já começa trabalhando na squad */
-  const EQUIPE_INICIAL = ['exemplo', 'gp-marina', 'gp-paulo', 'tl-rodrigo', 'tl-aline',
-    'ux-bruna', 'ux-caio', 'qa-dan', 'qa-livia', 'qa-otavio',
-    'dev-leo', 'dev-rafa', 'dev-bia', 'dev-nico', 'dev-cami', 'dev-duda'];
+  const EQUIPE_INICIAL = CATALOG.filter(c => c.key !== 'exemplo').map(c => c.key);
 
   /* ===========================================================
      ESTADO
@@ -196,7 +155,7 @@ const ROSTER = (() => {
   const doLocal = () => {
     try {
       const d = JSON.parse(localStorage.getItem(KEY) || 'null');
-      return d && Array.isArray(d.team) && d.team.length ? d.team : null;
+      return d && Array.isArray(d.team) && d.team.length && d.v >= PLANTA ? d.team : null;
     } catch (e) { return null; }
   };
 
@@ -204,7 +163,7 @@ const ROSTER = (() => {
     let vindoDoDisco = null;
     try {
       const d = await (await fetch('/api/equipe')).json();
-      if (d && Array.isArray(d.team) && d.team.length) vindoDoDisco = d.team;
+      if (d && Array.isArray(d.team) && d.team.length && d.v >= PLANTA) vindoDoDisco = d.team;
     } catch (e) { /* servidor fora: vale o que o navegador tiver */ }
 
     team = vindoDoDisco || doLocal() || defaults();
@@ -238,7 +197,7 @@ const ROSTER = (() => {
 
   let gravando = null;
   function save() {
-    try { localStorage.setItem(KEY, JSON.stringify({ team, v: 1 })); }
+    try { localStorage.setItem(KEY, JSON.stringify({ team, v: PLANTA })); }
     catch (e) { /* storage bloqueado: o disco ainda pega */ }
     // junta as chamadas seguidas num POST só — arrastar um agente dispara
     // save() várias vezes por segundo
@@ -246,7 +205,7 @@ const ROSTER = (() => {
     gravando = setTimeout(() => {
       fetch('/api/equipe', {
         method: 'PUT', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ team, v: 1 })
+        body: JSON.stringify({ team, v: PLANTA })
       }).catch(() => { /* offline: fica o espelho do navegador */ });
     }, 300);
   }

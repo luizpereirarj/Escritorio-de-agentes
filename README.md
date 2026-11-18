@@ -1,35 +1,43 @@
-# Squad Pagar & Receber — Escritório de Agentes
+# Squad de Consórcio Pagar & Receber — Escritório de Agentes
 
 Um andar de prédio corporativo, isométrico e no estilo Habbo, para a squad de
-TI bancária que cuida dos fluxos de **pagamentos** (Pix, TED, agendamentos) e
-**recebimentos** (boleto, QR Code, conciliação). Estética minimalista, marca em
-azul e laranja. Cada pessoa da squad é um boneco com mesa e computador
-próprios; clicar no computador abre o **sistema daquele agente** ali dentro,
-com botões para ligar, desligar, ver o log e conversar com ele pelo Claude Code.
+tecnologia do **consórcio do Itaú** que cuida dos fluxos de **pagar**
+(pagamento do bem, devoluções) e **receber** (parcelas, lances, boleto, Pix,
+conciliação). Estética minimalista com a identidade visual do Itaú: laranja,
+azul e o logo na recepção, no topo da tela e na TV da sala de reunião.
+Cada pessoa da squad é um boneco com mesa e computador próprios; clicar no
+computador abre o **sistema daquele agente** ali dentro, com botões para ligar,
+desligar, ver o log e conversar com ele pelo Claude Code.
 
-O andar:
+O andar (grade 60 × 34):
 
-| Sala | O que tem |
-| --- | --- |
-| **Gerentes de Projeto** | 4 mesas (uma é a sua), roadmap do trimestre, quadro de ideias e próximas entregas |
-| **Tech Leaders** | 4 mesas com dois monitores, a arquitetura de pagar & receber desenhada no quadro |
-| **UX Design** | 4 mesas com mesa digitalizadora, moodboard com paleta, wireframe e post-its da jornada |
-| **Qualidade (QA)** | 6 mesas com celulares de teste, painel do pipeline de release |
-| **Desenvolvimento** | open space com 12 estações e o painel "Squad agora" |
-| **Sala de Reunião** | mesa para oito e tela de apresentação |
-| **Jogos** | fliperama, sinuca, pebolim, puffs e café |
-| **Recepção & circulação** | elevadores, balcão com o logo, pilares, sinalização de saída |
+| Sala | Quem | O que tem |
+| --- | --- | --- |
+| **Gerência** | Marcelo Bordotti | mesa do gerente com cadeiras de visita, sofá, armário, indicadores do consórcio e quadro de ideias |
+| **Produto** | Filipe Coelho, Raphaela, Luane | 4 mesas, roadmap do trimestre e próximas entregas |
+| **Tech Lead** | Matheus Oliveira | 2 mesas com dois monitores, arquitetura de pagar & receber no quadro |
+| **Desenvolvimento** | Emesron Bilieri, Edison Maciel, Bruno Cavalcanti, Luiz Pereira, Thiago Pereira, Jose Ergildo | open space com 8 estações, impressora e o painel "Squad agora" |
+| **Qualidade** | Bianca Mancuso | 2 mesas com celulares de teste, device lab e pipeline de release |
+| **SRE** | Natalia Galdino, Bruno Roberto | 3 mesas viradas para o painel de observabilidade e racks de PROD e HML |
+| **Atendimento** | Nathalia Chaves | 2 mesas com headset e o painel da fila de chamados (fila, SLA, CSAT) |
+| **Processos** | Gabriel Simplicio | 2 mesas, jornada do consorciado e kanban de melhorias |
+| **Sala de Reunião** | | mesa para oito e tela de apresentação |
+| **Cozinha** | | bancada com pia, cooktop, micro-ondas e cafeteira, geladeira, mesa para quatro |
+| **Jogos** | | fliperama, sinuca, pebolim, puffs e sofá |
+| **Recepção & circulação** | | elevadores, balcão com o logo, pilares, extintores e saída de emergência |
 
 As paredes da fachada têm janelas com vista da cidade que mudam com a hora do
 dia (dia, fim de tarde e noite). As salas são separadas por divisórias de vidro
 com faixa jateada, como num prédio de escritórios de verdade.
 
-- Cada agente tem uma sala (escolhida no cadastro ou na ficha dele) e senta
-  numa mesa livre dessa sala.
-- Os bonecos trabalham na própria mesa, vão para a sala de jogos no horário que
-  você definir e se juntam na sala de reunião quando há reunião.
-- O logo (setas de pagar e receber) é original da squad: troque em
-  `favicon.svg`, no topo do `index.html` e na função `logo` de `js/world.js`.
+- Cada pessoa tem uma sala (escolhida no cadastro ou na ficha) e senta numa
+  mesa livre dessa sala. O gerente fica sempre na mesa da Gerência.
+- Os bonecos trabalham na própria mesa, fazem pausa na cozinha ou na sala de
+  jogos e se juntam na sala de reunião quando há reunião.
+- A aparência de cada boneco é sorteada a partir do nome; troque na ficha
+  (clique no boneco) em **Visual**.
+- A marca fica em `favicon.svg`, no topo do `index.html`, na função `logo` de
+  `js/world.js` e nas cores de `css/style.css`.
 - O escritório sobe os sistemas locais, vigia quem caiu e religa sozinho.
 - Nenhuma dependência: só Node.js.
 
@@ -43,9 +51,12 @@ cd escritorio-de-agentes
 npm start
 ```
 
-Abra **http://localhost:4321**. Vem um agente de exemplo (pasta
-`exemplo-agente`): clique no computador dele e em **Ligar** para ver o fluxo
-completo.
+Abra **http://localhost:4321**. O agente de exemplo (pasta `exemplo-agente`)
+fica na aba **Contratar**: contrate, clique no computador dele e em **Ligar**
+para ver o fluxo completo.
+
+Quem já usava a planta anterior: a equipe salva nela é trocada pela squad
+nova na primeira abertura (a planta mudou e as mesas antigas não existem mais).
 
 No Windows:
 - **`INICIAR ESCRITORIO.cmd`** sobe o escritório e o religa se ele cair.
@@ -104,7 +115,7 @@ reunião, use `data/config.json` (veja abaixo).
 Copie `data/config.exemplo.json` para `data/config.json` e ajuste:
 
 - `nome`, `subtitulo`: o topo da tela e o letreiro das paredes.
-- `dono`: o seu nome no boneco da Diretoria.
+- O gerente (boneco fixo na Gerência) e a squad ficam em `js/roster.js`.
 - `empresa`: uma frase sobre o negócio, que vira contexto na reunião.
 - `porta`: a porta do escritório (padrão 4321).
 - `reuniao.automatica`, `dias`, `hora`: a reunião em horário fixo.

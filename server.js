@@ -23,9 +23,9 @@ const ROOT = __dirname;
    padrão abaixo; o modelo comentado está em data/config.exemplo.json. */
 const CONFIG_ARQ = path.join(ROOT, 'data', 'config.json');
 const CONFIG_PADRAO = {
-  nome: 'Squad Pagar & Receber', subtitulo: 'Tecnologia · Meios de Pagamento',
-  dono: 'Você',
-  empresa: 'Squad de TI de um banco, responsável pelos fluxos de pagamentos (Pix, TED, agendamentos) e recebimentos (boleto, QR Code, conciliação).',
+  nome: 'Squad de Consórcio Pagar & Receber', subtitulo: 'Itaú · Tecnologia · Consórcio',
+  dono: 'Marcelo Bordotti',
+  empresa: 'Squad de tecnologia do consórcio do Itaú, responsável pelos fluxos de pagar (pagamento do bem, devoluções) e receber (parcelas, lances, boleto, Pix, conciliação).',
   porta: 4321,
   reuniao: { automatica: false, dias: [1, 5], hora: 11, minuto: 0, duracaoMin: 30, modelo: 'sonnet',
              foco: '', meta: { descricao: '', alvo: 0, feito: 0, unidade: 'resultados', ate: '' } }
@@ -784,7 +784,7 @@ const servidor = http.createServer(async (req, res) => {
       try {
         fs.mkdirSync(path.dirname(EQUIPE), { recursive: true });
         if (fs.existsSync(EQUIPE)) fs.copyFileSync(EQUIPE, EQUIPE_BAK);
-        fs.writeFileSync(EQUIPE, JSON.stringify({ team: d.team, v: 1 }, null, 2));
+        fs.writeFileSync(EQUIPE, JSON.stringify({ team: d.team, v: Number(d.v) || 1 }, null, 2));
       } catch (e) { return json(res, 500, { ok: false, motivo: e.message }); }
       json(res, 200, { ok: true, n: d.team.length });
     });

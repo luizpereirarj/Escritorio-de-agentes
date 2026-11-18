@@ -195,7 +195,8 @@ class Actor {
   }
 
   wander() {
-    const room = this.a.status === 'descanso' ? WORLD.ROOMS.lounge
+    const pausa = WORLD.REST_ROOMS[Math.floor(Math.random() * WORLD.REST_ROOMS.length)];
+    const room = this.a.status === 'descanso' ? WORLD.ROOMS[pausa]
                : this.a.status === 'reuniao'  ? WORLD.ROOMS.reuniao
                : (WORLD.ROOMS[this.a.dept] || WORLD.ROOMS.dev);
     for (let i = 0; i < 14; i++) {
@@ -259,7 +260,7 @@ class Actor {
     if (this.moving)           { this.act = 'indo para ' + (this.slot ? (this.slot.label || 'a estação') : 'algum lugar'); return; }
     if (st === 'trabalhando')  { this.act = this.slot ? ('produzindo na ' + this.slot.label) : 'procurando mesa livre'; return; }
     if (st === 'reuniao')      { this.act = 'em reunião'; return; }
-    if (st === 'descanso')     { this.act = this.slot ? this.slot.act : 'circulando na sala de jogos'; return; }
+    if (st === 'descanso')     { this.act = this.slot ? this.slot.act : 'em pausa'; return; }
     this.act = '';
   }
 
@@ -305,8 +306,8 @@ class Actor {
 
     if (opts.names) {
       stack -= AVATAR.nameTag(ctx, p.x, stack, this.a.name,
-                              this.a.boss ? '#c4b8ff' : col,
-                              this.a.boss ? 'DONO' : null) + 4;
+                              this.a.boss ? WORLD.BRAND.laranja : col,
+                              this.a.boss ? 'GERENTE' : null) + 4;
     }
     if (opts.status && !this.moving) {
       const ic = this.a.status === 'trabalhando' ? '💻'
@@ -675,13 +676,14 @@ function renderHire() {
 function renderRooms() {
   const box = $('#rooms-list');
   box.innerHTML = '';
-  const order = [...WORLD.WORK_ROOMS, 'reuniao', 'lounge', 'corredor'];
+  const order = [...WORLD.WORK_ROOMS, 'reuniao', ...WORLD.REST_ROOMS, 'corredor'];
   for (const id of order) {
     const r = WORLD.ROOMS[id];
     const inside = Array.from(actors.values()).filter(ac =>
       !ac.hidden && WORLD.roomAt(Math.round(ac.x), Math.round(ac.y)) === id);
     const cap = id === 'reuniao' ? FURN.meetSlots.length
-              : id === 'lounge'  ? FURN.restSlots.length
+              : WORLD.REST_ROOMS.includes(id)
+                ? FURN.restSlots.filter(s => WORLD.roomAt(Math.floor(s.x), Math.floor(s.y)) === id).length
               : FURN.workSlots.filter(s => s.room === id).length;
     const pct = cap ? Math.min(100, inside.length / cap * 100) : 0;
     const el = document.createElement('div');
@@ -692,7 +694,7 @@ function renderRooms() {
       <div class="rmeta" style="color:${r.accent}">${inside.length} pessoa(s) agora${cap ? ` · ${cap} lugares` : ''}</div>
       ${cap ? `<div class="bar"><i style="width:${pct}%;background:${r.accent}"></i></div>` : ''}`;
     el.addEventListener('click', () => {
-      if (id === 'corredor') focusTile(40, 15.5, 0.8);
+      if (id === 'corredor') focusTile(50, 14, 0.8);
       else focusTile((r.x1 + r.x2) / 2, (r.y1 + r.y2) / 2, 0.7);
     });
     box.appendChild(el);
@@ -704,7 +706,7 @@ function renderStats() {
   $('#st-idle').textContent = ROSTER.count('descanso');
   $('#st-off').textContent  = ROSTER.count('offline');
   const leg = $('#roomlegend');
-  leg.innerHTML = [...WORLD.WORK_ROOMS, 'reuniao', 'lounge'].map(id => {
+  leg.innerHTML = [...WORLD.WORK_ROOMS, 'reuniao', ...WORLD.REST_ROOMS].map(id => {
     const r = WORLD.ROOMS[id];
     const n = Array.from(actors.values()).filter(ac =>
       !ac.hidden && WORLD.roomAt(Math.round(ac.x), Math.round(ac.y)) === id).length;
@@ -1330,13 +1332,13 @@ $('#mon-desligar').addEventListener('click', async () => {
 });
 
 /* ===========================================================
-   QUADRO — ideias e agenda que aparecem nas paredes da Diretoria
+   QUADRO — ideias e agenda que aparecem nas paredes da Gerência e do Produto
    =========================================================== */
 function openQuadro() {
   const ideias = QUADRO.ideias(), eventos = QUADRO.eventos();
   mbody.innerHTML = `
     <h3 style="font-family:var(--f-display);margin:0 0 3px">📌 Quadro</h3>
-    <p class="hint" style="margin-bottom:14px">O que você anotar aqui aparece no quadro branco e no painel de eventos da Diretoria.</p>
+    <p class="hint" style="margin-bottom:14px">O que você anotar aqui aparece no quadro branco e no painel de próximas entregas da sala de Produto.</p>
     <div class="frow"><label>Nova ideia para o quadro branco</label>
       <div class="inline"><input id="q-txt" placeholder="ex.: testar um canal de vendas novo" maxlength="52">
       <button class="mini" id="q-add">anotar</button></div></div>

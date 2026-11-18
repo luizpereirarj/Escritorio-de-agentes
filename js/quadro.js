@@ -1,5 +1,5 @@
 /* ===========================================================
-   quadro.js — ideias e agenda que aparecem nas paredes da Diretoria.
+   quadro.js — ideias e agenda que aparecem nas paredes da Gerência e do Produto.
    Ficam no navegador (localStorage): são lembretes, não registro.
    =========================================================== */
 const QUADRO = (() => {
